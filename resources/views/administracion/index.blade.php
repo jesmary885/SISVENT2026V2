@@ -41,6 +41,32 @@
                                 <i class="fas fa-store text-sm"></i>
                                 <span>Compras</span>
                             </button>
+
+                            <button 
+                                x-on:click="openTab = 4" 
+                                :class="{ 
+                                    'bg-blue-600 text-white': openTab === 4,  <!-- FONDO AZUL cuando está activo -->
+                                    'bg-gray-200 text-gray-700 hover:bg-gray-300': openTab !== 4  <!-- FONDO GRIS cuando NO está activo -->
+                                }" 
+                                class="flex-1 cursor-pointer py-4 px-6 rounded-xl font-semibold transition-all duration-300 ease-in-out flex items-center justify-center space-x-2"
+                            >
+                                <i class="fas fa-store text-sm"></i>
+                                <span>Usuarios</span>
+                            </button>
+
+                            <button 
+                                x-on:click="openTab = 5" 
+                                :class="{ 
+                                    'bg-blue-600 text-white': openTab === 5,  <!-- FONDO AZUL cuando está activo -->
+                                    'bg-gray-200 text-gray-700 hover:bg-gray-300': openTab !== 5  <!-- FONDO GRIS cuando NO está activo -->
+                                }" 
+                                class="flex-1 cursor-pointer py-4 px-6 rounded-xl font-semibold transition-all duration-300 ease-in-out flex items-center justify-center space-x-2"
+                            >
+                                <i class="fas fa-store text-sm"></i>
+                                <span>Roles y permisos</span>
+                            </button>
+
+
                         </div>
                     </div>
                 </div>
@@ -57,6 +83,15 @@
                  <div x-show="openTab === 3" class="transition-all duration-300">
                     @livewire('administracion.compras.compras-index') 
                 </div>
+
+                <div x-show="openTab === 4" class="transition-all duration-300">
+                    @livewire('user.user-role-manager') 
+                </div>
+
+                 <div x-show="openTab === 5" class="transition-all duration-300">
+                    @livewire('roles.role-index') 
+                </div>
+
             </div>
         </div>
     </div>

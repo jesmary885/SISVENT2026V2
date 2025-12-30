@@ -165,6 +165,40 @@
             }
         });
     </script>
+<!-- En app.blade.php o tu layout principal -->
+<script src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
+<link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css">
+
+        <script>
+            document.addEventListener('livewire:initialized', function() {
+                Livewire.on('notify', (event) => {
+                    Toastify({
+                        text: event.message,
+                        duration: 3000,
+                        gravity: "top",
+                        position: "right",
+                        backgroundColor: event.type === 'success' ? '#10B981' : '#EF4444',
+                        stopOnFocus: true,
+                    }).showToast();
+                });
+            });
+        </script>
+
+        <script>
+            document.addEventListener('livewire:initialized', () => {
+                // Escuchar eventos de cierre
+                Livewire.on('closeForm', () => {
+                    // El componente principal manejará esto
+                });
+                
+                // También puedes cerrar con Escape key
+                document.addEventListener('keydown', (e) => {
+                    if (e.key === 'Escape') {
+                        Livewire.dispatch('closeForm');
+                    }
+                });
+            });
+        </script>
 
 
 
