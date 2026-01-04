@@ -222,75 +222,7 @@
         @endif
     </div>
 
-<!-- Detalle de Compras Realizadas -->
-<div class="section">
-    <div class="section-title">Detalle de Compras Realizadas</div>
-    
-    @if(($totalComprasPeriodo ?? 0) > 0 && isset($detalleCompras) && $detalleCompras->count() > 0)
-        <p style="margin-bottom: 10px; font-weight: bold;">
-            Total de Compras: {{ $totalComprasPeriodo }} registro(s) - 
-            Monto Total: ${{ number_format($desgloseEgresos['compras_negocio'] ?? $desgloseEgresos['gasto_compras'] ?? 0, 2) }}
-        </p>
-        
-        <table>
-            <thead>
-                <tr>
-                    <th>Fecha</th>
-                    <th>Producto</th>
-                    <th>Cantidad</th>
-                    <th>Precio Compra</th>
-                    <th>Total</th>
-                    <th>Proveedor</th>
-                    <th>Registrado por</th>
-                </tr>
-            </thead>
-            <tbody>
-                @foreach($detalleCompras as $compra)
-                <tr>
-                    <td>{{ \Carbon\Carbon::parse($compra->created_at)->format('d/m/Y H:i') }}</td>
-                    <td>
-                        {{ $compra->producto->nombre ?? 'N/A' }}
-                        @if($compra->producto->codigo ?? false)
-                            <br><small style="font-size: 9px;">Cod: {{ $compra->producto->codigo }}</small>
-                        @endif
-                    </td>
-                    <td style="text-align: center;">{{ $compra->cantidad }}</td>
-                    <td style="text-align: right;">
-                        ${{ number_format($compra->precio_compra_dolares ?? 0, 2) }}
-                    </td>
-                    <td style="text-align: right; font-weight: bold;">
-                        @php
-                            $totalCompra = ($compra->total_pagado_dolares > 0) 
-                                ? $compra->total_pagado_dolares 
-                                : (($compra->precio_compra_dolares ?? 0) * $compra->cantidad);
-                        @endphp
-                        ${{ number_format($totalCompra, 2) }}
-                    </td>
-                    <td>
-                        {{ $compra->proveedor->nombre ?? 'N/A' }}
-                    </td>
-                    <td>
-                        {{ $compra->user->name ?? 'Sistema' }}
-                    </td>
-                </tr>
-                @endforeach
-            </tbody>
-            <tfoot>
-                <tr style="font-weight: bold; background-color: #f8f9fa;">
-                    <td colspan="4" style="text-align: right;">TOTALES:</td>
-                    <td style="text-align: right;">
-                        ${{ number_format($desgloseEgresos['compras_negocio'] ?? $desgloseEgresos['gasto_compras'] ?? 0, 2) }}
-                    </td>
-                    <td colspan="2"></td>
-                </tr>
-            </tfoot>
-        </table>
-    @else
-        <p style="text-align: center; color: #666; font-style: italic;">
-            No se realizaron compras en este período.
-        </p>
-    @endif
-</div>
+
 
     <!-- Detalle de Compras Realizadas -->
 

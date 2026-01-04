@@ -68,36 +68,61 @@ class ReportesVentas extends Component
             $datosExportacion = [
                 'fechaInicio' => $this->fechaInicio,
                 'fechaFin' => $this->fechaFin,
+                
+                // Métricas principales
                 'totalVentasPeriodo' => $this->totalVentasPeriodo,
                 'ingresosTotales' => $this->ingresosTotales,
                 'egresosTotales' => $this->egresosTotales,
                 'gananciaBruta' => $this->gananciaBruta,
+                'gananciaEstimada' => $this->gananciaEstimada ?? 0, // Agregar si existe
                 
-                // IMPORTANTE: Pasar ambos nombres
+                // Desglose de egresos (con ambos nombres por compatibilidad)
                 'desgloseEgresos' => array_merge($this->desgloseEgresos, [
                     'compras_negocio' => $this->desgloseEgresos['gasto_compras'] ?? 0
                 ]),
                 
+                // Detalle de compras
                 'detalleCompras' => $this->detalleCompras,
                 'totalComprasPeriodo' => $this->totalComprasPeriodo,
                 
-                // ... resto de datos ...
+                // Información de deudas
+                'deudasPendientesTotal' => $this->deudasPendientesTotal,
+                'deudasPagadasTotal' => $this->deudasPagadasTotal,
+                'totalDeudas' => $this->totalDeudas,
+                'detalleDeudas' => $this->detalleDeudas,
+                'estadoDeudas' => $this->estadoDeudas,
+                
+                // Productos más vendidos
+                'productosMasVendidos' => $this->productosMasVendidos,
+                
+                // Métodos de pago
+                'ventasPorMetodoPago' => $this->ventasPorMetodoPago,
+                
+                // Ventas por día
+                'ventasPorDia' => $this->ventasPorDia,
+                
+                // Clientes que más compran
+                'topClientes' => $this->topClientes,
             ];
 
-            \Log::info("PDF - Compras negocio: " . ($datosExportacion['desgloseEgresos']['compras_negocio'] ?? 'NO'));
-            \Log::info("PDF - Gasto compras: " . ($datosExportacion['desgloseEgresos']['gasto_compras'] ?? 'NO'));
-            \Log::info("PDF - Detalle compras: " . $this->detalleCompras->count());
+            \Log::info("PDF - Datos a exportar:");
+            \Log::info("- Productos más vendidos: " . ($this->productosMasVendidos->count() ?? 0));
+            \Log::info("- Ventas por método pago: " . ($this->ventasPorMetodoPago->count() ?? 0));
+            \Log::info("- Ventas por día: " . ($this->ventasPorDia->count() ?? 0));
+            \Log::info("- Top clientes: " . ($this->topClientes->count() ?? 0));
 
             $pdf = Pdf::loadView('exports.reporte-ventas', $datosExportacion)
                 ->setPaper('a4', 'portrait');
 
+            $nombreArchivo = 'reporte-completo-' . Carbon::now()->format('Y-m-d') . '.pdf';
+
             return response()->streamDownload(function () use ($pdf) {
                 echo $pdf->output();
-            }, 'reporte.pdf');
+            }, $nombreArchivo);
 
         } catch (\Exception $e) {
-            \Log::error('Error PDF: ' . $e->getMessage());
-            session()->flash('error', 'Error: ' . $e->getMessage());
+            \Log::error('Error generando PDF: ' . $e->getMessage());
+            session()->flash('error', 'Error al generar el reporte PDF: ' . $e->getMessage());
         }
     }
     public function cargarEstadisticas()
