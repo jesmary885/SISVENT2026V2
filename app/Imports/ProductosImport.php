@@ -36,7 +36,7 @@ class ProductosImport implements ToCollection, WithHeadingRow
                 // Preparar datos - CONVERSIÓN CORRECTA DE TIPOS
                 $data = [
                     'nombre' => $this->convertToString($row['nombre'] ?? null),
-                    'cod_barra' => $this->convertToString($row['codigo_de_barras'] ?? $row['cod_barra'] ?? null),
+                    'cod_barra' => $this->processCodigoBarras($row['codigo_de_barras'] ?? $row['cod_barra'] ?? null),
                     'cantidad' => intval($row['cantidad_en_stock'] ?? $row['cantidad'] ?? 0),
                     'presentacion' => $this->convertToString($row['presentacion'] ?? null),
                     'categoria' => $this->convertToString($row['categoria'] ?? null),
@@ -156,6 +156,46 @@ class ProductosImport implements ToCollection, WithHeadingRow
         }
 
         return (string)$value;
+    }
+
+        /**
+     * Procesa específicamente códigos de barras
+     */
+    private function processCodigoBarras($value)
+    {
+        if (empty($value)) {
+            return null;
+        }
+
+        $value = trim($value);
+        
+        // 1. Limpiar formato Excel forzado
+        if (preg_match('/^="([^"]+)"$/', $value, $matches)) {
+            $value = $matches[1];
+        } elseif (preg_match("/^='([^']+)'$/", $value, $matches)) {
+            $value = $matches[1];
+        }
+        
+        // 2. Si es numérico, manejarlo sin notación científica
+        if (is_numeric($value)) {
+            // Si es muy grande (más de 10 dígitos), asumir que es código de barras
+            if ($value > 999999999) {
+                // Forzar representación como string sin notación científica
+                return sprintf('%.0f', $value);
+            }
+            
+            // Para números normales, quitar decimales si los tiene
+            if (strpos($value, '.') !== false) {
+                return explode('.', $value)[0];
+            }
+            
+            return (string)$value;
+        }
+        
+        // 3. Limpiar espacios, saltos de línea, etc.
+        $value = preg_replace('/\s+/', '', $value);
+        
+        return $value;
     }
 
     private function getMarcaId($marcaNombre)

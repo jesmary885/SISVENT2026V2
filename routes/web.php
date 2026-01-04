@@ -43,9 +43,9 @@ Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified']
     Route::get('Caja',[GeneralController::class,'caja'])->name('caja')->middleware('permission:Cajero');
     Route::get('Cambiar-credenciales',[GeneralController::class,'cambiarCredenciales'])->name('perfil.credenciales')->middleware('permission:Administrador');
 
-    Route::get('/ticket/{id}', [TicketController::class, 'generarTicket'])->name('ticket.pdf')->middleware('permission:Cajero');
+    Route::get('/ticket/{venta}', [TicketController::class, 'generarTicket'])->name('ticket.pdf')->middleware('permission:Cajero');
     Route::get('/ticket-preview/{venta}', [TicketController::class, 'vistaPrevia'])->name('ticket.preview')->middleware('permission:Cajero');
-    Route::get('/factura/{id}', [FacturaController::class, 'generarFactura'])->name('factura.pdf')->middleware('permission:Cajero');
+    Route::get('/factura/{venta}', [FacturaController::class, 'generarFactura'])->name('factura.pdf')->middleware('permission:Cajero');
     Route::get('/factura-preview/{venta}', [FacturaController::class, 'vistaPrevia'])->name('factura.preview')->middleware('permission:Cajero');
 
      // Roles

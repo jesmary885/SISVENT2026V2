@@ -73,6 +73,189 @@
         </div>
     </div>
 
+    <!-- DESGLOSE DE EGRESOS (nueva sección) -->
+    <div class="bg-white rounded-2xl p-6 shadow-lg border border-gray-200">
+        <h3 class="text-xl font-bold text-gray-800 mb-4 flex items-center">
+            <i class="fas fa-money-bill-wave text-red-500 mr-2"></i>
+            Desglose de Egresos (Inversiones)
+        </h3>
+        
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <!-- Costo de Ventas -->
+            <div class="bg-red-50 border border-red-200 rounded-xl p-4">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-red-800 font-semibold">Costo de Ventas</p>
+                        <p class="text-red-600 text-sm">Productos vendidos</p>
+                    </div>
+                    <div class="text-right">
+                        <p class="text-2xl font-bold text-red-700">${{ number_format($desgloseEgresos['costo_ventas'] ?? 0, 2) }}</p>
+                        <p class="text-red-600 text-xs">costo real</p>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Compras del Negocio -->
+     
+            <!-- Total Egresos -->
+            <div class="bg-purple-50 border border-purple-200 rounded-xl p-4">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-purple-800 font-semibold">Total Egresos</p>
+                        <p class="text-purple-600 text-sm">Inversión total</p>
+                    </div>
+                    <div class="text-right">
+                        <p class="text-2xl font-bold text-purple-700">${{ number_format($egresosTotales, 2) }}</p>
+                        <p class="text-purple-600 text-xs">Costo + Compras</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        @if($desgloseEgresos['total_compras_bolivares'] > 0)
+        <div class="mt-4 text-center text-sm text-gray-600">
+            <i class="fas fa-info-circle"></i>
+            Compras en Bolívares: Bs. {{ number_format($desgloseEgresos['total_compras_bolivares'], 2) }}
+        </div>
+        @endif
+    </div>
+
+    <!-- Detalle de Compras Realizadas -->
+<!-- SECCIÓN DE COMPRAS DEL NEGOCIO (NUEVA) -->
+<div class="bg-white rounded-2xl p-6 shadow-lg border border-gray-200 mt-6">
+    <h3 class="text-xl font-bold text-gray-800 mb-4 flex items-center">
+        <i class="fas fa-shopping-cart text-purple-500 mr-2"></i>
+        Compras del Negocio (Detalle)
+    </h3>
+    
+    <!-- Resumen de compras -->
+    <div class="grid grid-cols-1 md:grid-cols-1 gap-4 mb-6">
+        <div class="bg-purple-50 border border-purple-200 rounded-xl p-4">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-purple-800 font-semibold">Total Compras</p>
+                    <p class="text-purple-600 text-sm">{{ $totalComprasPeriodo }} compras</p>
+                </div>
+                <div class="text-right">
+                    <p class="text-2xl font-bold text-purple-700">
+                        ${{ number_format($desgloseEgresos['compras_negocio'] ?? $desgloseEgresos['gasto_compras'] ?? 0, 2) }}
+                    </p>
+                    <p class="text-purple-600 text-xs">inversión en inventario</p>
+                </div>
+            </div>
+        </div>
+        
+  
+    </div>
+    
+    <!-- Tabla de detalle de compras -->
+    @if($totalComprasPeriodo > 0 && !empty($detalleCompras) && $detalleCompras->count() > 0)
+    <div class="overflow-x-auto">
+        <table class="w-full border-collapse">
+            <thead>
+                <tr class="bg-gray-50">
+                    <th class="py-3 px-4 text-left text-sm font-semibold text-gray-700">Fecha</th>
+                    <th class="py-3 px-4 text-left text-sm font-semibold text-gray-700">Producto</th>
+                    <th class="py-3 px-4 text-left text-sm font-semibold text-gray-700">Cantidad</th>
+                    <th class="py-3 px-4 text-left text-sm font-semibold text-gray-700">Precio Compra</th>
+                    <th class="py-3 px-4 text-left text-sm font-semibold text-gray-700">Total</th>
+                    <th class="py-3 px-4 text-left text-sm font-semibold text-gray-700">Proveedor</th>
+                    <th class="py-3 px-4 text-left text-sm font-semibold text-gray-700">Registrado por</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-200">
+                @foreach($detalleCompras as $compra)
+                <tr class="hover:bg-gray-50">
+                    <td class="py-3 px-4">
+                        {{ \Carbon\Carbon::parse($compra->created_at)->format('d/m/Y H:i') }}
+                    </td>
+                    <td class="py-3 px-4">
+                        <div class="font-medium text-gray-900">
+                            {{ $compra->producto->nombre ?? 'N/A' }}
+                        </div>
+                        @if($compra->producto->codigo ?? false)
+                        <div class="text-xs text-gray-500">
+                            Cod: {{ $compra->producto->codigo }}
+                        </div>
+                        @endif
+                    </td>
+                    <td class="py-3 px-4 text-center font-semibold">
+                        {{ $compra->cantidad }}
+                    </td>
+                    <td class="py-3 px-4">
+                        @if($compra->precio_compra_dolares > 0)
+                        <div class="text-green-600 font-medium">
+                            ${{ number_format($compra->precio_compra_dolares, 2) }}
+                        </div>
+                        @endif
+                        @if($compra->precio_compra_bolivares > 0)
+                        <div class="text-xs text-gray-500">
+                            Bs. {{ number_format($compra->precio_compra_bolivares, 2) }}
+                        </div>
+                        @endif
+                    </td>
+                    <td class="py-3 px-4">
+                        @php
+                            $totalDolares = ($compra->total_pagado_dolares > 0) 
+                                ? $compra->total_pagado_dolares 
+                                : ($compra->precio_compra_dolares * $compra->cantidad);
+                        @endphp
+                        
+                        <div class="font-bold text-purple-600">
+                            ${{ number_format($totalDolares, 2) }}
+                        </div>
+                        
+                        @if($compra->total_pagado_bolivares > 0)
+                        <div class="text-xs text-gray-500">
+                            Bs. {{ number_format($compra->total_pagado_bolivares, 2) }}
+                        </div>
+                        @endif
+                    </td>
+                    <td class="py-3 px-4">
+                        <div class="font-medium">
+                            {{ $compra->proveedor->nombre ?? 'N/A' }}
+                        </div>
+                        @if($compra->proveedor->telefono ?? false)
+                        <div class="text-xs text-gray-500">
+                            {{ $compra->proveedor->telefono }}
+                        </div>
+                        @endif
+                    </td>
+                    <td class="py-3 px-4">
+                        {{ $compra->user->name ?? 'Sistema' }}
+                    </td>
+                </tr>
+                @endforeach
+            </tbody>
+            <tfoot class="bg-gray-50">
+                <tr>
+                    <td colspan="4" class="py-3 px-4 text-right font-bold">
+                        TOTALES:
+                    </td>
+                    <td class="py-3 px-4 font-bold text-purple-700">
+                        ${{ number_format($desgloseEgresos['compras_negocio'] ?? $desgloseEgresos['gasto_compras'] ?? 0, 2) }}
+                        @if($desgloseEgresos['total_compras_bolivares'] ?? 0 > 0)
+                        <div class="text-xs font-normal text-blue-600">
+                            Bs. {{ number_format($desgloseEgresos['total_compras_bolivares'], 2) }}
+                        </div>
+                        @endif
+                    </td>
+                    <td colspan="2"></td>
+                </tr>
+            </tfoot>
+        </table>
+    </div>
+    @else
+    <div class="text-center py-8 text-gray-500">
+        <i class="fas fa-shopping-cart text-3xl mb-2"></i>
+        <p>No se realizaron compras en este período</p>
+        <p class="text-sm text-gray-400 mt-1">
+            {{ date('d/m/Y', strtotime($fechaInicio)) }} - {{ date('d/m/Y', strtotime($fechaFin)) }}
+        </p>
+    </div>
+    @endif
+</div>
+
     <!-- DEUDAS DEL PERÍODO (SECCIÓN MÁS IMPORTANTE) -->
     <div class="bg-white rounded-2xl p-6 shadow-lg border border-gray-200">
         <h3 class="text-xl font-bold text-gray-800 mb-4 flex items-center">

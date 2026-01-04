@@ -59,6 +59,10 @@
                             <th scope="col" class="px-6 py-4 text-left font-semibold text-gray-700">
                                 Fecha
                             </th>
+
+                             <th scope="col" class="px-6 py-4 text-center font-semibold text-gray-700">
+                                Cliente
+                            </th>
                             <th scope="col" class="px-6 py-4 text-center font-semibold text-gray-700">
                                 Cant. de productos
                             </th>
@@ -92,6 +96,13 @@
                                     </div>
                                 </div>
                             </td>
+
+                            <td class="px-6 py-4 text-center">
+                                <span class="bg-blue-100 text-blue-800 px-3 py-1 rounded-lg font-medium">
+                                    
+                                   {{$registro->cliente->nombre}}
+                                </span>
+                             </td>
 
                             <td class="px-6 py-4 text-center">
                                 <span class="bg-blue-100 text-blue-800 px-3 py-1 rounded-lg font-medium">

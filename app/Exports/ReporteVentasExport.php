@@ -20,16 +20,23 @@ class ReporteVentasExport implements FromView
     // Métricas principales
     protected $totalVentasPeriodo;
     protected $ingresosTotales;
-    protected $egresosTotales; // NUEVO: Costo de las ventas
-    protected $gananciaBruta; // NUEVO: Ingresos - Egresos
+    protected $egresosTotales; // Costo de las ventas + Compras del negocio
+    protected $gananciaBruta; // Ingresos - Egresos
     protected $gananciaEstimada;
+    
+    // Desglose de egresos
+    protected $desgloseEgresos;
+    
+    // NUEVO: Detalle de compras
+    protected $detalleCompras;
+    protected $totalComprasPeriodo;
     
     // Métricas de deudas
     protected $deudasPendientesTotal;
     protected $deudasPagadasTotal;
     protected $totalDeudas;
     protected $detalleDeudas;
-    protected $estadoDeudas; // NUEVO: Agregar esta variable
+    protected $estadoDeudas;
     
     // Otras métricas
     protected $productosMasVendidos;
@@ -41,6 +48,17 @@ class ReporteVentasExport implements FromView
     {
         $this->fechaInicio = $fechaInicio;
         $this->fechaFin = $fechaFin;
+        
+        // Inicializar desglose de egresos
+        $this->desgloseEgresos = [
+            'costo_ventas' => 0,
+            'compras_negocio' => 0,
+            'total_compras_bolivares' => 0
+        ];
+        
+        // Inicializar detalle de compras
+        $this->detalleCompras = collect([]);
+        $this->totalComprasPeriodo = 0;
         
         // Calcular todas las estadísticas al instanciar la clase
         $this->calcularEstadisticas();
@@ -61,52 +79,131 @@ class ReporteVentasExport implements FromView
         $this->totalVentasPeriodo = $estadisticasVentas->total_ventas;
         $this->ingresosTotales = $estadisticasVentas->total_ventas_dolares;
         
-        // 2. CALCULAR EGREOS (COSTO DE LO VENDIDO) - NUEVO
+        // 2. CALCULAR EGREOS (COSTO DE LO VENDIDO + COMPRAS DEL NEGOCIO)
         $this->calcularEgresos();
         
-        // 3. GANANCIA BRUTA REAL (Ingresos - Egresos)
+        // 3. NUEVO: OBTENER DETALLE DE COMPRAS
+        $this->calcularDetalleCompras();
+        
+        // 4. GANANCIA BRUTA REAL (Ingresos - Egresos)
         $this->gananciaBruta = $this->ingresosTotales - $this->egresosTotales;
         
-        // 4. GANANCIA ESTIMADA (por si quieres mantenerla)
+        // 5. GANANCIA ESTIMADA (por si quieres mantenerla)
         $this->gananciaEstimada = $this->ingresosTotales * 0.6;
 
-        // 5. DEUDAS DEL PERÍODO
+        // 6. DEUDAS DEL PERÍODO
         $this->calcularDeudas();
 
-        // 6. PRODUCTOS MÁS VENDIDOS
+        // 7. PRODUCTOS MÁS VENDIDOS
         $this->calcularProductosMasVendidos();
 
-        // 7. VENTAS POR MÉTODO DE PAGO
+        // 8. VENTAS POR MÉTODO DE PAGO
         $this->calcularVentasPorMetodoPago();
 
-        // 8. VENTAS POR DÍA
+        // 9. VENTAS POR DÍA
         $this->calcularVentasPorDia();
 
-        // 9. CLIENTES QUE MÁS COMPRAN
+        // 10. CLIENTES QUE MÁS COMPRAN
         $this->calcularTopClientes();
     }
 
-    // NUEVO MÉTODO: Calcular egresos (costo de lo vendido)
+    // MÉTODO ACTUALIZADO: Calcular egresos (costo de lo vendido + compras del negocio)
     private function calcularEgresos()
     {
-        // Obtener todos los productos vendidos en el período con su costo
-        $productosVendidos = ProductoVenta::whereBetween('producto_ventas.created_at', [
-            Carbon::parse($this->fechaInicio)->startOfDay(),
-            Carbon::parse($this->fechaFin)->endOfDay()
-        ])
-        ->join('productos', 'producto_ventas.producto_id', '=', 'productos.id')
-        ->select(
-            'producto_ventas.cantidad',
-            'productos.costo_dolares'
-        )
-        ->get();
+        try {
+            // A) COSTO DE LO VENDIDO
+            $costoVentas = 0;
+            
+            try {
+                $productosVendidos = ProductoVenta::whereBetween('producto_ventas.created_at', [
+                    Carbon::parse($this->fechaInicio)->startOfDay(),
+                    Carbon::parse($this->fechaFin)->endOfDay()
+                ])
+                ->with('producto')
+                ->get();
 
-        // Calcular el costo total de lo vendido
-        $this->egresosTotales = $productosVendidos->sum(function($item) {
-            return $item->cantidad * ($item->costo_dolares ?? 0);
-        });
+                $costoVentas = $productosVendidos->sum(function($item) {
+                    if ($item->producto) {
+                        $costo = $item->producto->costo_dolares ?? 
+                                $item->producto->costo ?? 
+                                $item->producto->precio_costo ?? 
+                                $item->producto->precio_compra ?? 0;
+                        return $item->cantidad * $costo;
+                    }
+                    return 0;
+                });
+
+            } catch (\Exception $e) {
+                $costoVentas = 0;
+            }
+
+            // B) COMPRAS DEL NEGOCIO - CORREGIDO
+            $comprasNegocio = Compra::whereBetween('created_at', [
+                Carbon::parse($this->fechaInicio)->startOfDay(),
+                Carbon::parse($this->fechaFin)->endOfDay()
+            ])->get();
+
+            // Suma manejando NULLs
+            $totalComprasDolares = $comprasNegocio->sum(function($compra) {
+                return $compra->total_pagado_dolares ?? 0;
+            });
+            
+            $totalComprasBolivares = $comprasNegocio->sum(function($compra) {
+                return $compra->total_pagado_bolivares ?? 0;
+            });
+
+            // Calcular alternativo si total_pagado es 0 o NULL
+            $totalAlternativoDolares = $comprasNegocio->sum(function($compra) {
+                if (($compra->total_pagado_dolares ?? 0) > 0) {
+                    return $compra->total_pagado_dolares;
+                }
+                return ($compra->precio_compra_dolares ?? 0) * $compra->cantidad;
+            });
+
+            // Usar el mayor valor
+            $totalComprasDolares = max($totalComprasDolares, $totalAlternativoDolares);
+
+            // C) TOTAL DE EGRESOS
+            $this->egresosTotales = $costoVentas + $totalComprasDolares;
+            
+            // D) Almacenar desglose
+            $this->desgloseEgresos = [
+                'costo_ventas' => $costoVentas,
+                'compras_negocio' => $totalComprasDolares,
+                'total_compras_bolivares' => $totalComprasBolivares
+            ];
+            
+        } catch (\Exception $e) {
+            \Log::error('Error calculando egresos en ReporteVentasExport: ' . $e->getMessage());
+            $this->egresosTotales = 0;
+            $this->desgloseEgresos = [
+                'costo_ventas' => 0,
+                'compras_negocio' => 0,
+                'total_compras_bolivares' => 0
+            ];
+        }
     }
 
+    // NUEVO MÉTODO: Obtener detalle de compras realizadas
+    private function calcularDetalleCompras()
+    {
+        try {
+            $this->detalleCompras = Compra::whereBetween('created_at', [
+                Carbon::parse($this->fechaInicio)->startOfDay(),
+                Carbon::parse($this->fechaFin)->endOfDay()
+            ])
+            ->with(['producto', 'proveedor', 'user'])
+            ->orderBy('created_at', 'desc')
+            ->get();
+
+            $this->totalComprasPeriodo = $this->detalleCompras->count();
+            
+        } catch (\Exception $e) {
+            \Log::error('Error obteniendo detalle de compras: ' . $e->getMessage());
+            $this->detalleCompras = collect([]);
+            $this->totalComprasPeriodo = 0;
+        }
+    }
     private function calcularDeudas()
     {
         $deudas = Deuda::whereBetween('created_at', [
@@ -248,16 +345,23 @@ class ReporteVentasExport implements FromView
             // Métricas principales
             'totalVentasPeriodo' => $this->totalVentasPeriodo,
             'ingresosTotales' => $this->ingresosTotales,
-            'egresosTotales' => $this->egresosTotales, // NUEVO
-            'gananciaBruta' => $this->gananciaBruta, // NUEVO
+            'egresosTotales' => $this->egresosTotales,
+            'gananciaBruta' => $this->gananciaBruta,
             'gananciaEstimada' => $this->gananciaEstimada,
+            
+            // Desglose de egresos
+            'desgloseEgresos' => $this->desgloseEgresos,
+            
+            // NUEVO: Detalle de compras
+            'detalleCompras' => $this->detalleCompras,
+            'totalComprasPeriodo' => $this->totalComprasPeriodo,
             
             // Información de deudas
             'deudasPendientesTotal' => $this->deudasPendientesTotal,
             'deudasPagadasTotal' => $this->deudasPagadasTotal,
             'totalDeudas' => $this->totalDeudas,
             'detalleDeudas' => $this->detalleDeudas,
-            'estadoDeudas' => $this->estadoDeudas, // NUEVO: Agregar esta línea
+            'estadoDeudas' => $this->estadoDeudas,
             
             // Productos más vendidos
             'productosMasVendidos' => $this->productosMasVendidos,

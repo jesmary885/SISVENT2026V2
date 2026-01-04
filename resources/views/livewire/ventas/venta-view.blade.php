@@ -83,7 +83,7 @@
                         <div>
                             <h3 class="text-lg font-semibold text-gray-800 mb-3">CLIENTE</h3>
                             <div class="space-y-1 text-gray-600">
-                                <p class="font-medium text-gray-900">Cliente General</p>
+                                <p class="font-medium text-gray-900">{{$venta->cliente->nombre}}</p>
                             </div>
                         </div>
                     </div>

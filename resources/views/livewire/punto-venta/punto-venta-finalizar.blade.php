@@ -186,6 +186,10 @@
                         <option value="bs_efec">Bolívares en efectivo</option>
                         <option value="usdt">USDT</option>
                     </select>
+
+                    @error('metodo_pago')
+                        <p class="text-red-500 text-sm mt-1">El método de pago es requerido </p>
+                    @enderror
                 </div>
 
                 <!-- OPCIONES DE COMPROBANTE -->

@@ -74,6 +74,227 @@
         @endif
     </div>
 
+    <div class="section">
+    <div class="section-title">RESUMEN FINANCIERO</div>
+    
+    <!-- INGRESOS -->
+    <table style="width: 100%; margin-bottom: 15px;">
+        <tr style="background-color: #e8f5e8;">
+            <td colspan="2" style="padding: 8px; font-weight: bold; color: #2e7d32;">
+                INGRESOS
+            </td>
+        </tr>
+        <tr>
+            <td style="padding: 6px 8px;">Ventas Totales:</td>
+            <td style="padding: 6px 8px; text-align: right; font-weight: bold;">
+                ${{ number_format($ingresosTotales, 2) }}
+            </td>
+        </tr>
+    </table>
+    
+    <!-- COSTOS -->
+    <table style="width: 100%; margin-bottom: 15px;">
+        <tr style="background-color: #ffebee;">
+            <td colspan="2" style="padding: 8px; font-weight: bold; color: #c62828;">
+                COSTOS
+            </td>
+        </tr>
+        <tr>
+            <td style="padding: 6px 8px;">Costo de Productos Vendidos:</td>
+            <td style="padding: 6px 8px; text-align: right;">
+                ${{ number_format($desgloseEgresos['costo_ventas'], 2) }}
+                <br>
+                <small style="color: #666; font-size: 9px;">
+                    (Costo real de lo que se vendió)
+                </small>
+            </td>
+        </tr>
+    </table>
+    
+    <!-- GANANCIA BRUTA -->
+    <table style="width: 100%; margin-bottom: 20px;">
+        <tr style="background-color: {{ $gananciaBruta >= 0 ? '#e8f5e8' : '#ffebee' }}; 
+            border-top: 2px solid {{ $gananciaBruta >= 0 ? '#2e7d32' : '#c62828' }};">
+            <td style="padding: 10px; font-weight: bold; font-size: 14px;">
+                {{ $gananciaBruta >= 0 ? 'GANANCIA BRUTA' : 'PÉRDIDA BRUTA' }}
+            </td>
+            <td style="padding: 10px; text-align: right; font-weight: bold; font-size: 16px;
+                color: {{ $gananciaBruta >= 0 ? '#2e7d32' : '#c62828' }};">
+                ${{ number_format(abs($gananciaBruta), 2) }}
+            </td>
+        </tr>
+    </table>
+    
+    <!-- INFORMACIÓN ADICIONAL (COMPRAS) -->
+    <div style="background-color: #e3f2fd; padding: 10px; border-radius: 5px; border-left: 4px solid #1976d2;">
+        <p style="margin: 0 0 5px 0; font-weight: bold; color: #1565c0;">
+            💰 INFORMACIÓN ADICIONAL DE COMPRAS
+        </p>
+        <table style="width: 100%; font-size: 12px;">
+            <tr>
+                <td>Total gastado en compras (período):</td>
+                <td style="text-align: right;">
+                    ${{ number_format($desgloseEgresos['gasto_compras'], 2) }}
+                </td>
+            </tr>
+            <tr>
+                <td>Número de compras realizadas:</td>
+                <td style="text-align: right;">
+                    {{ $totalComprasPeriodo }}
+                </td>
+            </tr>
+        </table>
+        <p style="margin: 5px 0 0 0; font-size: 10px; color: #546e7a;">
+            📝 Nota: Este gasto en compras incrementa tu inventario y se convertirá 
+            en "Costo de Ventas" cuando esos productos sean vendidos en el futuro.
+        </p>
+    </div>
+</div>
+
+<!-- SECCIÓN 2: DETALLE DE COMPRAS (si hay) -->
+@if($totalComprasPeriodo > 0)
+<div class="section">
+    <div class="section-title">📋 DETALLE DE COMPRAS REALIZADAS</div>
+    <table>
+        <thead>
+            <tr>
+                <th>Fecha</th>
+                <th>Producto</th>
+                <th>Cantidad</th>
+                <th>Precio Compra</th>
+                <th>Total</th>
+                <th>Proveedor</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach($detalleCompras as $compra)
+            <tr>
+                <td>{{ \Carbon\Carbon::parse($compra->created_at)->format('d/m/Y') }}</td>
+                <td>{{ $compra->producto->nombre ?? 'N/A' }}</td>
+                <td style="text-align: center;">{{ $compra->cantidad }}</td>
+                <td style="text-align: right;">
+                    ${{ number_format($compra->precio_compra_dolares ?? 0, 2) }}
+                </td>
+                <td style="text-align: right; font-weight: bold;">
+                    ${{ number_format(($compra->precio_compra_dolares ?? 0) * $compra->cantidad, 2) }}
+                </td>
+                <td>{{ $compra->proveedor->nombre ?? 'N/A' }}</td>
+            </tr>
+            @endforeach
+        </tbody>
+    </table>
+</div>
+@endif
+
+
+
+
+    <!-- Desglose de Egresos -->
+
+    <div class="section">
+        <div class="section-title">Desglose de Egresos</div>
+        <table>
+            <thead>
+                <tr>
+                    <th>Concepto</th>
+                    <th>Descripción</th>
+                    <th>Monto en Dólares</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>Costo de Ventas</td>
+                    <td>Costo real de productos vendidos</td>
+                    <td>${{ number_format($desgloseEgresos['costo_ventas'] ?? 0, 2) }}</td>
+                </tr>
+                <tr>
+                    <td>Compras del Negocio</td>
+                    <td>Inversión en inventario (adquisiciones)</td>
+                    <td>${{ number_format($desgloseEgresos['compras_negocio'] ?? $desgloseEgresos['gasto_compras'] ?? 0, 2) }}</td>
+                </tr>
+            </tbody>
+        </table>
+        
+        @if(($desgloseEgresos['total_compras_bolivares'] ?? 0) > 0)
+        <p style="text-align: center; font-size: 11px; color: #666; margin-top: 5px;">
+            Compras en Bolívares: Bs. {{ number_format($desgloseEgresos['total_compras_bolivares'], 2) }}
+        </p>
+        @endif
+    </div>
+
+<!-- Detalle de Compras Realizadas -->
+<div class="section">
+    <div class="section-title">Detalle de Compras Realizadas</div>
+    
+    @if(($totalComprasPeriodo ?? 0) > 0 && isset($detalleCompras) && $detalleCompras->count() > 0)
+        <p style="margin-bottom: 10px; font-weight: bold;">
+            Total de Compras: {{ $totalComprasPeriodo }} registro(s) - 
+            Monto Total: ${{ number_format($desgloseEgresos['compras_negocio'] ?? $desgloseEgresos['gasto_compras'] ?? 0, 2) }}
+        </p>
+        
+        <table>
+            <thead>
+                <tr>
+                    <th>Fecha</th>
+                    <th>Producto</th>
+                    <th>Cantidad</th>
+                    <th>Precio Compra</th>
+                    <th>Total</th>
+                    <th>Proveedor</th>
+                    <th>Registrado por</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach($detalleCompras as $compra)
+                <tr>
+                    <td>{{ \Carbon\Carbon::parse($compra->created_at)->format('d/m/Y H:i') }}</td>
+                    <td>
+                        {{ $compra->producto->nombre ?? 'N/A' }}
+                        @if($compra->producto->codigo ?? false)
+                            <br><small style="font-size: 9px;">Cod: {{ $compra->producto->codigo }}</small>
+                        @endif
+                    </td>
+                    <td style="text-align: center;">{{ $compra->cantidad }}</td>
+                    <td style="text-align: right;">
+                        ${{ number_format($compra->precio_compra_dolares ?? 0, 2) }}
+                    </td>
+                    <td style="text-align: right; font-weight: bold;">
+                        @php
+                            $totalCompra = ($compra->total_pagado_dolares > 0) 
+                                ? $compra->total_pagado_dolares 
+                                : (($compra->precio_compra_dolares ?? 0) * $compra->cantidad);
+                        @endphp
+                        ${{ number_format($totalCompra, 2) }}
+                    </td>
+                    <td>
+                        {{ $compra->proveedor->nombre ?? 'N/A' }}
+                    </td>
+                    <td>
+                        {{ $compra->user->name ?? 'Sistema' }}
+                    </td>
+                </tr>
+                @endforeach
+            </tbody>
+            <tfoot>
+                <tr style="font-weight: bold; background-color: #f8f9fa;">
+                    <td colspan="4" style="text-align: right;">TOTALES:</td>
+                    <td style="text-align: right;">
+                        ${{ number_format($desgloseEgresos['compras_negocio'] ?? $desgloseEgresos['gasto_compras'] ?? 0, 2) }}
+                    </td>
+                    <td colspan="2"></td>
+                </tr>
+            </tfoot>
+        </table>
+    @else
+        <p style="text-align: center; color: #666; font-style: italic;">
+            No se realizaron compras en este período.
+        </p>
+    @endif
+</div>
+
+    <!-- Detalle de Compras Realizadas -->
+
+
     <!-- Estado de Deudas -->
     <div class="section">
         <div class="section-title">Estado de Deudas</div>
