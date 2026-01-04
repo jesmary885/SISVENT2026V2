@@ -20,6 +20,8 @@
                 </div>
                 
                 <!-- Botón Agregar -->
+
+                @can('Administrador')
                 <div class="w-full lg:w-auto">
                     @livewire('inventario.inventario-create', ['tipo' => 'agregar'])
                 </div>
@@ -29,6 +31,7 @@
                      @livewire('inventario.import-export-inventario')
 
                 </div>
+                @endcan
             </div>
         </div>
     </div>
@@ -90,7 +93,9 @@
                             <th class="px-6 py-4 text-center font-semibold text-gray-700">Código</th>
                             <th class="px-6 py-4 text-center font-semibold text-gray-700">Marca</th>
                             <th class="px-6 py-4 text-center font-semibold text-gray-700">Precio</th>
+                            @can('Administrador')
                             <th class="px-6 py-4 text-center font-semibold text-gray-700">Acciones</th>
+                            @endcan
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-gray-200">
@@ -144,6 +149,8 @@
                             </td>
                             
                             <!-- Acciones -->
+
+                            @can('Administrador')
                             <td class="px-6 py-4">
                                 <div class="flex justify-center space-x-2">
                                     @livewire('inventario.inventario-add', ['registro' => $registro], key('add-'.$registro->id))
@@ -160,6 +167,7 @@
                                     </button>
                                 </div>
                             </td>
+                            @endcan
                         </tr>
                         @endforeach
                     </tbody>

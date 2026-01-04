@@ -17,11 +17,15 @@
                     </x-nav-link>
                 </div>
 
+                @can('Administrador')
+
                 <div class="hidden space-x-8 sm:-my-px sm:ml-10 sm:flex">
                     <x-nav-link href="{{ route('administracion') }}" :active="request()->routeIs('administracion')">
                        Administración
                     </x-nav-link>
                 </div>
+
+                @endcan
 
                 <div class="hidden space-x-8 sm:-my-px sm:ml-10 sm:flex">
                     <x-nav-link href="{{ route('inventario_index') }}" :active="request()->routeIs('inventario_index')">
@@ -41,11 +45,15 @@
                     </x-nav-link>
                 </div>
 
+                @can('Administrador')
+
                 <div class="hidden space-x-8 sm:-my-px sm:ml-10 sm:flex">
                     <x-nav-link href="{{ route('configuracion') }}" :active="request()->routeIs('configuracion')">
                         Configuración
                     </x-nav-link>
                 </div>
+
+                @endcan
             </div>
 
             <div class="hidden sm:flex sm:items-center sm:ml-6">
@@ -114,10 +122,13 @@
                             <div class="block px-4 py-2 text-xs text-gray-400">
                                 {{ __('Manage Account') }}
                             </div>
+                            @can('Administrador')
 
                             <x-dropdown-link href="{{ route('perfil.credenciales') }}">
                                 Perfil
                             </x-dropdown-link>
+
+                            @endcan
 
                             @if (Laravel\Jetstream\Jetstream::hasApiFeatures())
                                 <x-dropdown-link href="{{ route('api-tokens.index') }}">
@@ -167,6 +178,8 @@
             </x-responsive-nav-link>
 
             <!-- Administración -->
+
+            @can('Administrador')
             <x-responsive-nav-link href="{{ route('administracion') }}" :active="request()->routeIs('administracion')">
                 <div class="flex items-center">
                     <svg class="w-5 h-5 mr-3 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -175,6 +188,8 @@
                     Administración
                 </div>
             </x-responsive-nav-link>
+
+            @endcan
 
             <!-- Inventario -->
             <x-responsive-nav-link href="{{ route('inventario_index') }}" :active="request()->routeIs('inventario_index')">
@@ -207,6 +222,8 @@
             </x-responsive-nav-link>
 
             <!-- Configuración -->
+
+            @can('Administrador')
             <x-responsive-nav-link href="{{ route('configuracion') }}" :active="request()->routeIs('configuracion')">
                 <div class="flex items-center">
                     <svg class="w-5 h-5 mr-3 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -216,6 +233,7 @@
                     Configuración
                 </div>
             </x-responsive-nav-link>
+            @endcan
         </div>
 
         <!-- Responsive Settings Options -->
@@ -235,6 +253,8 @@
 
             <div class="mt-3 space-y-1">
                 <!-- Account Management -->
+
+                @can('Administrador')
                 <x-responsive-nav-link href="{{ route('perfil.credenciales') }}" :active="request()->routeIs('perfil.credenciales')">
                     <div class="flex items-center">
                         <svg class="w-5 h-5 mr-3 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -243,6 +263,7 @@
                         Perfil
                     </div>
                 </x-responsive-nav-link>
+                @endcan
 
                 @if (Laravel\Jetstream\Jetstream::hasApiFeatures())
                     <x-responsive-nav-link href="{{ route('api-tokens.index') }}" :active="request()->routeIs('api-tokens.index')">

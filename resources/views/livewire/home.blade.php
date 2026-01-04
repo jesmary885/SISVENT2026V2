@@ -258,6 +258,8 @@
             <i class="fas fa-arrow-right text-white text-lg group-hover:translate-x-1 transition-transform"></i>
         </a>
 
+        @can('Administrador')
+
         <a href="{{ route('reportes') }}" class="p-4 bg-gradient-to-r from-purple-500 to-purple-600 hover:from-purple-600 hover:to-purple-700 rounded-xl transition-all duration-300 transform hover:scale-105 shadow-lg flex items-center justify-between group">
             <div class="flex items-center">
                 <div class="w-12 h-12 bg-white/20 rounded-lg flex items-center justify-center mr-4">
@@ -270,6 +272,8 @@
             </div>
             <i class="fas fa-arrow-right text-white text-lg group-hover:translate-x-1 transition-transform"></i>
         </a>
+
+        @endcan
 
         <!-- En algún lugar visible, por ejemplo cerca del header -->
 {{-- @if($tieneVentaPausada)

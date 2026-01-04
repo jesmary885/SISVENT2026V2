@@ -327,6 +327,16 @@ class PuntoVentaFinalizar extends Component
         $rules = $this->rules;
         $this->validate($rules);
 
+         // 1. VERIFICAR SI HAY CAJA ABIERTA
+        $caja_activa = \App\Models\Caja::abiertas()->first();
+        if (!$caja_activa) {
+            $this->dispatchBrowserEvent('notify', [
+                'type' => 'error',
+                'message' => '❌ No hay caja abierta. Abra una caja antes de finalizar la venta.'
+            ]);
+            return;
+        }
+
         if ($this->hay_deuda && $this->deuda > 0) {
             $this->validate([
                 'fecha_limite_deuda' => 'required|date|after_or_equal:today',
@@ -387,8 +397,27 @@ class PuntoVentaFinalizar extends Component
         $venta->metodo_pago = $this->metodo_pago;
         $venta->tipo_comprobante = $this->tipo_comprobante;
         $venta->estado_pago = $estado_pago;
+        $venta->caja_id = $caja_activa->id;
         $venta->comentario = $this->comentario_venta;
         $venta->save();
+
+        // 3. ACTUALIZAR EL SALDO DE LA CAJA
+        if ($this->metodo_pago == 'bs_efec') {
+            $caja_activa->increment('saldo_bolivares', $monto_pagado_bs);
+        } elseif ($this->metodo_pago == 'dol_efec') {
+            $caja_activa->increment('saldo_dolares', $monto_pagado_dol);
+        }
+        // Para otros métodos de pago (tarjeta, transferencia, etc.) no se incrementa el efectivo
+
+        \Log::info('Venta creada y asignada a caja:', [
+            'venta_id' => $venta->id,
+            'caja_id' => $caja_activa->id,
+            'metodo_pago' => $this->metodo_pago,
+            'monto_pagado_bs' => $monto_pagado_bs,
+            'monto_pagado_dol' => $monto_pagado_dol,
+            'nuevo_saldo_caja_bs' => $caja_activa->saldo_bolivares,
+            'nuevo_saldo_caja_dol' => $caja_activa->saldo_dolares,
+        ]);
 
         // Registrar deuda si el usuario decidió hacerlo
         if ($this->hay_deuda && $deuda_dol > 0) {

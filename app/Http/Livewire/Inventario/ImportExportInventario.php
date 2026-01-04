@@ -120,28 +120,16 @@ class ImportExportInventario extends Component
                 $datosEjemplo = [
                     [
                         'nombre' => 'Producto Ejemplo 1',
-                        'codigo_de_barras' => '="7501234567890"', // Fuerza texto en Excel
+                        'codigo_de_barras' => '7501234567890', // Fuerza texto en Excel
                         'cantidad_en_stock' => 50,
                         'presentacion' => 'Unidad',
-                        'categoria' => 'Electrónicos',
                         'precio_de_venta' => 299.99,
                         'stock_minimo' => 10,
                         'exento' => 'Si',
                         'estado' => 'Activo',
                         'marca' => 'Samsung'
                     ],
-                    [
-                        'nombre' => 'Producto Ejemplo 2', 
-                        'codigo_de_barras' => '="7501234567891"', // Fuerza texto en Excel
-                        'cantidad_en_stock' => 25,
-                        'presentacion' => 'Paquete',
-                        'categoria' => 'Hogar',
-                        'precio_de_venta' => 49.99,
-                        'stock_minimo' => 5,
-                        'exento' => 'No',
-                        'estado' => 'Activo',
-                        'marca' => 'Generica'
-                    ]
+                
                 ];
 
                 return Excel::download(new class($datosEjemplo) implements \Maatwebsite\Excel\Concerns\FromCollection, \Maatwebsite\Excel\Concerns\WithHeadings, \Maatwebsite\Excel\Concerns\WithColumnFormatting {
@@ -164,7 +152,6 @@ class ImportExportInventario extends Component
                             'codigo_de_barras',
                             'cantidad_en_stock',
                             'presentacion',
-                            'categoria',
                             'precio_de_venta',
                             'stock_minimo',
                             'exento',
