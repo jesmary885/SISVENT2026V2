@@ -325,15 +325,6 @@
     <!-- Botones de depuración -->
 
 
-    <!-- Debug info (solo para desarrollo) -->
-    @if(env('APP_DEBUG'))
-    <div class="mt-4 p-3 bg-gray-100 rounded text-xs">
-        <strong>Debug Info:</strong><br>
-        Caja Activa: {{ $caja_activa ? 'Sí (ID: ' . $caja_activa->id . ')' : 'No' }}<br>
-        Monto BS: {{ $monto_inicial_bs }}<br>
-        Monto USD: {{ $monto_inicial_dolares }}
-    </div>
-    @endif
 
     <!-- Script para descargar PDF - MEJORADO -->
 <script>
