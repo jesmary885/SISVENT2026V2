@@ -182,6 +182,7 @@
                         <option value="" selected>Selecciona el método de pago</option>
                         <option value="debito">Débito</option>
                         <option value="pago_movil">Pago móvil</option>
+                        <option value="bio">Biopago</option>
                         <option value="dol_efec">Dólares en efectivo</option>
                         <option value="bs_efec">Bolívares en efectivo</option>
                         <option value="usdt">USDT</option>
@@ -521,7 +522,7 @@
                     @endif
                     
                     <!-- PARA MÉTODOS ELECTRÓNICOS: PREGUNTAR SI PAGÓ COMPLETO -->
-                    @if(in_array($metodo_pago, ['debito', 'pago_movil', 'usdt']))
+                    @if(in_array($metodo_pago, ['debito', 'pago_movil', 'usdt','biopago']))
                     <div class="mb-4">
                         <div class="flex items-center justify-between mb-3">
                             <div class="flex items-center">
@@ -771,7 +772,7 @@
                 <div class="flex justify-between">
                     <span class="text-gray-600">Deuda pendiente:</span>
                     <span class="font-bold {{ $hay_deuda ? 'text-red-600' : 'text-orange-600' }}">
-                        @if(in_array($metodo_pago, ['debito', 'pago_movil', 'usdt', 'dol_efec']))
+                        @if(in_array($metodo_pago, ['debito', 'pago_movil', 'usdt', 'dol_efec','biopago']))
                             ${{ number_format($deuda, 2) }}
                         @else
                             Bs {{ number_format($deuda, 2) }}

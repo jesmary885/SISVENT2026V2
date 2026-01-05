@@ -182,7 +182,7 @@ class PuntoVentaFinalizar extends Component
         $monto_pagado = 0;
         $total = 0;
         
-        if (in_array($this->metodo_pago, ['debito', 'pago_movil', 'usdt', 'dol_efec'])) {
+        if (in_array($this->metodo_pago, ['debito', 'pago_movil', 'usdt', 'dol_efec','biopago'])) {
             $monto_pagado = floatval($this->montocdol) ?? 0;
             $total = floatval($this->total_dol);
         } elseif ($this->metodo_pago === 'bs_efec') {
@@ -247,7 +247,7 @@ class PuntoVentaFinalizar extends Component
     public function updatedMontoCancelado($value)
     {
         if ($value == 1) {
-            if (in_array($this->metodo_pago, ['debito', 'pago_movil', 'usdt'])) {
+            if (in_array($this->metodo_pago, ['debito', 'pago_movil', 'usdt','biopago'])) {
                 $this->montocdol = $this->total_dol;
                 $this->montocbs = $this->total_bs;
             }
@@ -364,7 +364,7 @@ class PuntoVentaFinalizar extends Component
             $deuda_dol = 0;
             $deuda_bs = 0;
         } else {
-            if (in_array($this->metodo_pago, ['debito', 'pago_movil', 'usdt', 'dol_efec'])) {
+            if (in_array($this->metodo_pago, ['debito', 'pago_movil', 'usdt', 'dol_efec','biopago'])) {
                 $monto_pagado_dol = floatval($this->montocdol) ?? 0;
                 $monto_pagado_bs = $monto_pagado_dol * $this->tasa_actual;
             } elseif ($this->metodo_pago === 'bs_efec') {
