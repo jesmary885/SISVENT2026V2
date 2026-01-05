@@ -20,8 +20,11 @@ class VentasIndex extends Component
     protected $listeners = [
         'render', 
         'ventaCreada' => 'actualizarLista',
-        'confirmacion' => 'confirmacion'
+        'confirmacion' => 'confirmacion',
+        'ventIndex' => 'render'
     ];
+
+
 
     public function mount()
     {

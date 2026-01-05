@@ -148,6 +148,7 @@ class DeudasIndex extends Component
             
             session()->flash('message', '✅ Deuda actualizada correctamente.');
             $this->emit('deudaActualizada');
+            $this->emit('ventIndex');
         }
     }
 
@@ -176,6 +177,7 @@ class DeudasIndex extends Component
             
             session()->flash('message', '✅ Pago registrado correctamente.');
             $this->emit('deudaActualizada');
+            $this->emit('ventIndex');
         }
     }
 
@@ -202,6 +204,7 @@ class DeudasIndex extends Component
             
             session()->flash('message', '✅ Deuda cancelada correctamente.');
             $this->emit('deudaActualizada');
+            $this->emit('ventIndex');
         }
     }
 
