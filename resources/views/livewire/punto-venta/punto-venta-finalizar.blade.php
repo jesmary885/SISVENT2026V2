@@ -182,7 +182,7 @@
                         <option value="" selected>Selecciona el método de pago</option>
                         <option value="debito">Débito</option>
                         <option value="pago_movil">Pago móvil</option>
-                        <option value="bio">Biopago</option>
+                        <option value="biopago">Biopago</option>
                         <option value="dol_efec">Dólares en efectivo</option>
                         <option value="bs_efec">Bolívares en efectivo</option>
                         <option value="usdt">USDT</option>
