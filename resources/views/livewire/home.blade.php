@@ -203,10 +203,11 @@
                     </div>
                     <h3 class="text-lg font-semibold text-gray-600 mb-2">No hay datos de ventas</h3>
                     <p class="text-gray-500 mb-4">No se registraron ventas en el período seleccionado</p>
-                    <button class="bg-gradient-to-r from-purple-500 to-blue-500 text-white px-4 py-2 rounded-lg hover:shadow-lg transition-all duration-300">
+                    <a href="{{ route('ventas_index') }}" class="bg-gradient-to-r from-purple-500 to-blue-500 text-white px-4 py-2 rounded-lg hover:shadow-lg transition-all duration-300">
+                        
                         <i class="fas fa-plus mr-2"></i>
-                        Agregar Productos
-                    </button>
+                        Iniciar venta
+                    </a>
                 </div>
             @endif
 </div>
