@@ -2,6 +2,7 @@
 
 namespace App\Http\Livewire\Administracion\Compras;
 
+use App\Models\Producto;
 use App\Models\Proveedor;
 use Livewire\Component;
 
@@ -9,18 +10,26 @@ class ComprasEdit extends Component
 {
 
     protected $listeners = ['render'];
-    public $open = false,$registro,$user_id,$proveedores,$proveedor_id,$cantidad,$precio_compra_dolares,$precio_compra_bolivares, $tasa_compra,$fecha_vencimiento,$lote_numero,$metodo_pago,$total_dolares;
+    public $open = false,$compra,$registro,$user_id,$proveedores,$proveedor_id,$cantidad,$precio_compra_dolares,$precio_compra_bolivares, $tasa_compra,$fecha_vencimiento,$lote_numero,$metodo_pago,$total_dolares;
 
-    protected $rules = [
-      'nombre' => 'required|max:255|min:2',
+    protected $rules_dolares = [
+      'cantidad' => 'required',
+      'proveedor' => 'required',
+      'metodo_pago' => 'required',
+      'precio_compra_dolares' => 'required',
+    ];
+
+    protected $rules_bolivares = [
+      'cantidad' => 'required',
+      'proveedor' => 'required',
+      'metodo_pago' => 'required',
+      'precio_compra_bolivares' => 'required',
     ];
 
 
     public function close(){
 
         $this->open = false;
-
-      
 
     }
 
@@ -34,7 +43,7 @@ class ComprasEdit extends Component
 
           $this->cantidad = $this->registro->cantidad;
 
-
+  
          $this->proveedores = Proveedor::all();
           $this->proveedor_id = $this->registro->proveedor_id;
       
@@ -48,15 +57,33 @@ class ComprasEdit extends Component
       $rules = $this->rules;
       $this->validate($rules);
 
+      if($this->registro->cantidad != $this->cantidad){
+        if($this->registro->cantidad > $this->cantidad){
+            $diferencia_cantidad = $this->registro->cantidad - $this->cantidad;
 
-        $compra->producto_id = $this->registro->id;
-        $compra->user_id= $this->user_id;
-        $compra->caja_id= 1;
-        $compra->proveedor_id= $this->proveedor_id;
-        $compra->cantidad= $this->cantidad;
-        $compra->metodo_pago= $this->metodo_pago;
+            $producto_mod = Producto::find($this->registro->producto_id);
 
-       if($this->metodo_pago == 'bs_efec' || $this->metodo_pago == 'pago_movil' ){
+            $producto_mod->update([
+              'cantidad' => $producto_mod->cantidad - $diferencia_cantidad
+            ]);
+        } 
+
+        else{
+
+            $diferencia_cantidad = $this->cantidad - $this->registro->cantidad ;
+
+            $producto_mod = Producto::find($this->registro->producto_id);
+
+            $producto_mod->update([
+              'cantidad' => $producto_mod->cantidad + $diferencia_cantidad
+            ]);
+        }
+
+      }
+
+      
+
+       if($this->metodo_pago == 'bs_efec' || $this->metodo_pago == 'pago_movil' || $this->metodo_pago == 'biopago' ){
 
         $this->registro->update([
             'producto_id' => $this->registro->id,
@@ -96,7 +123,6 @@ class ComprasEdit extends Component
           ->position('y', 'top')
           ->position('x', 'right')
           ->addSuccess('compra modificada exitosamente');
-
 
     }
 }
