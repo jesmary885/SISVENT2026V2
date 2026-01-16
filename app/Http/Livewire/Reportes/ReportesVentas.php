@@ -228,44 +228,42 @@ class ReportesVentas extends Component
     private function calcularEgresos()
     {
         try {
-            \Log::info("=== CALCULAR EGRESOS - INICIO ===");
+            \Log::info("=== CALCULAR EGRESOS - ESTRUCTURA CLARA ===");
             
-            // ----------------------------------------------------
-            // A) CALCULAR COSTO DE VENTAS (lo que gastaste en lo que VENDISTE)
-            // ----------------------------------------------------
+            // A) CALCULAR COSTO DE VENTAS (lo que realmente te costó vender)
             $costoVentas = $this->calcularCostoVentas();
-            \Log::info("Costo de Ventas calculado: $" . $costoVentas);
+            \Log::info("1. Costo de Ventas (costo real de lo vendido): $" . number_format($costoVentas, 2));
             
-            // ----------------------------------------------------
-            // B) CALCULAR COMPRAS DEL PERÍODO (solo para información)
-            // ----------------------------------------------------
+            // B) CALCULAR COMPRAS DEL PERÍODO (inversiones en inventario)
             $comprasPeriodo = Compra::whereBetween('created_at', [
                 Carbon::parse($this->fechaInicio)->startOfDay(),
                 Carbon::parse($this->fechaFin)->endOfDay()
             ])->get();
 
-            \Log::info("Compras encontradas en el período: " . $comprasPeriodo->count());
+            $totalComprasDolares = 0;
+            $totalComprasBolivares = 0;
             
-            // Calcular total gastado en compras NUEVAS
-            $totalGastadoCompras = $comprasPeriodo->sum(function($compra) {
-                // Prioridad 1: Si tiene total_pagado_dolares
-                if (($compra->total_pagado_dolares ?? 0) > 0) {
-                    return $compra->total_pagado_dolares;
+            foreach ($comprasPeriodo as $compra) {
+                // Para dólares
+                if (!empty($compra->total_pagado_dolares) && $compra->total_pagado_dolares > 0) {
+                    $totalComprasDolares += $compra->total_pagado_dolares;
+                } elseif (!empty($compra->precio_compra_dolares) && $compra->precio_compra_dolares > 0) {
+                    $totalComprasDolares += ($compra->precio_compra_dolares * $compra->cantidad);
                 }
-                // Prioridad 2: Calcular con precio_compra_dolares × cantidad
-                return ($compra->precio_compra_dolares ?? 0) * $compra->cantidad;
-            });
+                
+                // Para bolívares
+                if (!empty($compra->total_pagado_bolivares) && $compra->total_pagado_bolivares > 0) {
+                    $totalComprasBolivares += $compra->total_pagado_bolivares;
+                } elseif (!empty($compra->precio_compra_bolivares) && $compra->precio_compra_bolivares > 0) {
+                    $totalComprasBolivares += ($compra->precio_compra_bolivares * $compra->cantidad);
+                }
+            }
             
-            $totalComprasBolivares = $comprasPeriodo->sum(function($compra) {
-                return $compra->total_pagado_bolivares ?? 0;
-            });
+            \Log::info("2. Compras nuevas en el período: " . $comprasPeriodo->count() . " compras");
+            \Log::info("   - Total en dólares: $" . number_format($totalComprasDolares, 2));
+            \Log::info("   - Total en bolívares: Bs. " . number_format($totalComprasBolivares, 2));
             
-            \Log::info("Total gastado en compras: $" . $totalGastadoCompras);
-            \Log::info("Total compras bolívares: Bs. " . $totalComprasBolivares);
-            
-            // ----------------------------------------------------
             // C) OBTENER DETALLE DE COMPRAS PARA MOSTRAR
-            // ----------------------------------------------------
             $this->detalleCompras = Compra::whereBetween('created_at', [
                 Carbon::parse($this->fechaInicio)->startOfDay(),
                 Carbon::parse($this->fechaFin)->endOfDay()
@@ -276,43 +274,29 @@ class ReportesVentas extends Component
             
             $this->totalComprasPeriodo = $this->detalleCompras->count();
             
-            // DEPURACIÓN: Ver qué compras se obtuvieron
-            if ($this->totalComprasPeriodo > 0) {
-                \Log::info("=== DETALLE DE COMPRAS OBTENIDAS ===");
-                foreach ($this->detalleCompras as $index => $compra) {
-                    \Log::info("Compra #" . ($index + 1) . ":");
-                    \Log::info("  - ID: " . $compra->id);
-                    \Log::info("  - Producto: " . ($compra->producto->nombre ?? 'N/A'));
-                    \Log::info("  - Cantidad: " . $compra->cantidad);
-                    \Log::info("  - Precio: $" . ($compra->precio_compra_dolares ?? 0));
-                    \Log::info("  - Total: $" . ($compra->total_pagado_dolares ?? ($compra->precio_compra_dolares * $compra->cantidad)));
-                }
-            }
-            
-            // ----------------------------------------------------
             // D) CALCULAR TOTALES
-            // ----------------------------------------------------
-            // LOS EGRESOS SON SOLO EL COSTO DE LO VENDIDO
+            // LOS EGRESOS SON EL COSTO DE LO VENDIDO (no las compras nuevas)
             $this->egresosTotales = $costoVentas;
             
             // GANANCIA BRUTA = VENTAS - COSTO DE VENTAS
             $this->gananciaBruta = $this->ingresosTotales - $costoVentas;
             
-            // ----------------------------------------------------
             // E) ALMACENAR TODO EN DESGLOSE
-            // ----------------------------------------------------
             $this->desgloseEgresos = [
                 'costo_ventas' => $costoVentas,
-                'gasto_compras' => $totalGastadoCompras,
+                'compras_negocio' => $totalComprasDolares,
+                'gasto_compras' => $totalComprasDolares, // alias para la vista
                 'total_compras_bolivares' => $totalComprasBolivares
             ];
             
             \Log::info("=== RESUMEN FINAL ===");
-            \Log::info("Ingresos Totales: $" . $this->ingresosTotales);
-            \Log::info("Costo de Ventas: $" . $costoVentas);
-            \Log::info("Gastó en Compras: $" . $totalGastadoCompras);
-            \Log::info("Ganancia Bruta: $" . $this->gananciaBruta);
-            \Log::info("Compras encontradas: " . $this->totalComprasPeriodo);
+            \Log::info("Ingresos Totales (Ventas): $" . number_format($this->ingresosTotales, 2));
+            \Log::info("Costo de Ventas: $" . number_format($costoVentas, 2));
+            \Log::info("Compras nuevas (inversión): $" . number_format($totalComprasDolares, 2));
+            \Log::info("Egresos Totales (solo costo ventas): $" . number_format($this->egresosTotales, 2));
+            \Log::info("Ganancia Bruta: $" . number_format($this->gananciaBruta, 2));
+            \Log::info("Margen Bruto: " . ($this->ingresosTotales > 0 ? 
+                number_format((($this->ingresosTotales - $costoVentas) / $this->ingresosTotales) * 100, 1) . '%' : '0%'));
             
         } catch (\Exception $e) {
             \Log::error('Error en calcularEgresos: ' . $e->getMessage());
@@ -322,26 +306,86 @@ class ReportesVentas extends Component
             $this->egresosTotales = 0;
             $this->gananciaBruta = $this->ingresosTotales;
             $this->desgloseEgresos = [
-                'costo_ventas' => $costoVentas,
-                'gasto_compras' => $totalGastadoCompras,     // NUEVO nombre
-                'compras_negocio' => $totalGastadoCompras,  // VIEJO nombre (para compatibilidad)
-                'total_compras_bolivares' => $totalComprasBolivares
+                'costo_ventas' => 0,
+                'compras_negocio' => 0,
+                'gasto_compras' => 0,
+                'total_compras_bolivares' => 0
             ];
             $this->detalleCompras = collect([]);
             $this->totalComprasPeriodo = 0;
         }
     }
 
+    private function calcularCostoPromedioProducto($productoId, $fechaHasta)
+    {
+        try {
+            // Obtener todas las compras de este producto hasta la fecha límite
+            $comprasProducto = Compra::where('producto_id', $productoId)
+                ->where('created_at', '<=', Carbon::parse($fechaHasta)->endOfDay())
+                ->get();
+            
+            if ($comprasProducto->isEmpty()) {
+                \Log::warning("No hay compras registradas para el producto ID: {$productoId}");
+                return 0;
+            }
+            
+            \Log::info("  - Compras encontradas para producto {$productoId}: " . $comprasProducto->count());
+            
+            $totalUnidadesCompradas = 0;
+            $totalCostoCompras = 0;
+            
+            foreach ($comprasProducto as $compra) {
+                // Determinar el precio unitario de esta compra
+                $precioUnitario = 0;
+                $cantidad = floatval($compra->cantidad);
+                
+                // Prioridad 1: Si tiene precio_compra_dolares
+                if (!empty($compra->precio_compra_dolares) && $compra->precio_compra_dolares > 0) {
+                    $precioUnitario = floatval($compra->precio_compra_dolares);
+                }
+                // Prioridad 2: Calcular desde total_pagado_dolares
+                elseif (!empty($compra->total_pagado_dolares) && $compra->total_pagado_dolares > 0) {
+                    $precioUnitario = floatval($compra->total_pagado_dolares) / $cantidad;
+                }
+                
+                if ($precioUnitario > 0) {
+                    $totalUnidadesCompradas += $cantidad;
+                    $totalCostoCompras += ($precioUnitario * $cantidad);
+                    
+                    \Log::info("    * Compra ID {$compra->id}: {$cantidad} unidades a $" . number_format($precioUnitario, 2));
+                }
+            }
+            
+            if ($totalUnidadesCompradas > 0) {
+                $costoPromedio = $totalCostoCompras / $totalUnidadesCompradas;
+                \Log::info("  - Total unidades compradas: {$totalUnidadesCompradas}");
+                \Log::info("  - Total costo compras: $" . number_format($totalCostoCompras, 2));
+                \Log::info("  - Costo promedio calculado: $" . number_format($costoPromedio, 2));
+                
+                return $costoPromedio;
+            }
+            
+            return 0;
+            
+        } catch (\Exception $e) {
+            \Log::error('Error calculando costo promedio para producto ' . $productoId . ': ' . $e->getMessage());
+            return 0;
+        }
+    }
+
+    
     private function calcularCostoVentas()
     {
         try {
-            \Log::info("=== CALCULAR COSTO DE VENTAS ===");
+            \Log::info("=== CALCULAR COSTO DE VENTAS - BASADO EN COMPRAS ===");
             
-            // 1. Obtener todas las ventas del período
-            $ventasPeriodo = ProductoVenta::whereBetween('created_at', [
+            // 1. Obtener todas las ventas del período con productos
+            $ventasPeriodo = ProductoVenta::whereBetween('producto_ventas.created_at', [
                 Carbon::parse($this->fechaInicio)->startOfDay(),
                 Carbon::parse($this->fechaFin)->endOfDay()
-            ])->get();
+            ])
+            ->with(['producto'])
+            ->get();
             
             if ($ventasPeriodo->isEmpty()) {
                 \Log::info("No hay ventas en el período");
@@ -356,46 +400,46 @@ class ReportesVentas extends Component
             $ventasPorProducto = $ventasPeriodo->groupBy('producto_id');
             
             foreach ($ventasPorProducto as $productoId => $ventas) {
+                $producto = $ventas->first()->producto ?? null;
                 $totalVendido = $ventas->sum('cantidad');
-                \Log::info("Producto ID {$productoId}: Vendió {$totalVendido} unidades");
                 
-                // 3. Buscar TODAS las compras de este producto (hasta la fecha fin)
-                $comprasProducto = Compra::where('producto_id', $productoId)
-                    ->where('created_at', '<=', Carbon::parse($this->fechaFin)->endOfDay())
-                    ->get();
-                
-                if ($comprasProducto->isEmpty()) {
-                    \Log::warning("⚠️ Producto ID {$productoId} vendido pero SIN COMPRAS registradas");
+                if (!$producto) {
+                    \Log::warning("⚠️ Producto ID {$productoId} no encontrado");
                     continue;
                 }
                 
-                // 4. Calcular costo promedio del producto
-                $totalUnidadesCompradas = $comprasProducto->sum('cantidad');
-                $totalCostoCompras = $comprasProducto->sum(function($compra) {
-                    return ($compra->precio_compra_dolares ?? 0) * $compra->cantidad;
-                });
+                \Log::info("Producto: {$producto->nombre} (ID: {$productoId}) - Vendió {$totalVendido} unidades");
                 
-                \Log::info("  - Unidades compradas: {$totalUnidadesCompradas}");
-                \Log::info("  - Costo total compras: $" . $totalCostoCompras);
+                // 3. Calcular el costo promedio de este producto basado en las compras
+                $costoPromedio = $this->calcularCostoPromedioProducto($productoId, $this->fechaFin);
                 
-                if ($totalUnidadesCompradas > 0) {
-                    $costoPromedio = $totalCostoCompras / $totalUnidadesCompradas;
-                    $costoProducto = $totalVendido * $costoPromedio;
-                    $costoTotal += $costoProducto;
-                    
-                    \Log::info("  - Costo promedio: $" . round($costoPromedio, 2));
-                    \Log::info("  - Costo de ventas: $" . round($costoProducto, 2));
+                if ($costoPromedio <= 0) {
+                    \Log::warning("⚠️ No se pudo determinar costo para {$producto->nombre}, usando estimado");
+                    // Estimar costo como 60% del precio de venta si no hay compras
+                    $costoPromedio = floatval($producto->precio_venta) * 0.6;
                 }
+                
+                \Log::info("  - Costo promedio: $" . number_format($costoPromedio, 2));
+                
+                // 4. Calcular costo total de lo vendido
+                $costoProducto = $totalVendido * $costoPromedio;
+                $costoTotal += $costoProducto;
+                
+                \Log::info("  - Costo total del producto: $" . number_format($costoProducto, 2));
+                \Log::info("  - Costo acumulado total: $" . number_format($costoTotal, 2));
             }
             
-            \Log::info("Costo total de ventas: $" . $costoTotal);
+            \Log::info("Costo TOTAL de ventas: $" . number_format($costoTotal, 2));
             return $costoTotal;
             
         } catch (\Exception $e) {
             \Log::error('Error en calcularCostoVentas: ' . $e->getMessage());
+            \Log::error('Trace: ' . $e->getTraceAsString());
             return 0;
         }
     }
+
+
     private function cargarEstadisticasDeudas()
     {
         try {
