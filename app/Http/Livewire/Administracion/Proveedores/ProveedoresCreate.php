@@ -18,7 +18,7 @@ class ProveedoresCreate extends Component
       'nro_documento' => 'required|max:255|min:2',
       'nombre_encargado' => 'required',
       'email' => 'required',
-      'telefono' => 'required',
+      'telefono' => 'required|regex:/^[0-9\-]+$/|min:8|max:15',
       'direccion' => 'required',
     ];
 

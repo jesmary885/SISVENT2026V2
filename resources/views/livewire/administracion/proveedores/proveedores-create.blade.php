@@ -266,11 +266,13 @@
                                 Teléfono
                             </label>
                             <input 
-                                type="number" 
+                                type="tel" 
                                 id="telefono"
                                 wire:model.defer="telefono"
                                 class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 bg-white placeholder-gray-400"
-                                placeholder="Ejemplo. 0414-0000000"
+                                placeholder="Ejemplo: 0414-0000000 o 0424-1234567"
+                            
+                           
                             >
                             @error('telefono')
                                 <p class="text-red-500 text-sm mt-1">{{ $message }}</p>
@@ -341,6 +343,44 @@
     </x-dialog-modal>
 
 
+
+    <script>
+        function soloNumerosYGuion(event) {
+            const charCode = event.which ? event.which : event.keyCode;
+            const char = String.fromCharCode(charCode);
+            
+            // Permitir números (0-9), guión (-), tecla de borrar, tab, etc.
+            if (
+                (charCode >= 48 && charCode <= 57) || // números 0-9
+                charCode === 45 || // guión (-)
+                charCode === 8 ||  // backspace
+                charCode === 9 ||  // tab
+                charCode === 37 || // flecha izquierda
+                charCode === 39    // flecha derecha
+            ) {
+                return true;
+            }
+            
+            return false;
+        }
+
+        // También puedes agregar formato automático si lo deseas
+        document.addEventListener('livewire:initialized', () => {
+            Livewire.on('telefono-formateado', (telefono) => {
+                // Opcional: Formatear automáticamente
+                const input = document.getElementById('telefono');
+                if (input) {
+                    // Quitar todo excepto números
+                    let numeros = telefono.replace(/\D/g, '');
+                    
+                    // Formato: XXXX-XXXXXXX (si tiene 11 dígitos)
+                    if (numeros.length === 11) {
+                        input.value = numeros.replace(/(\d{4})(\d{7})/, '$1-$2');
+                    }
+                }
+            });
+        });
+    </script>
 
   
 

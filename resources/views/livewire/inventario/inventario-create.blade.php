@@ -240,6 +240,7 @@
                         >
                             <option value="" selected>Seleccione una opción</option>
                             <option value="Unidad">Unidad</option>
+                            <option value="Al mayor">Al mayor</option>
                             <option value="Kg">Kg</option>
                   
                         </select>

@@ -761,9 +761,13 @@
                     <span class="text-gray-600">Monto pagado:</span>
                     <span class="font-medium text-green-600">
                         @if($metodo_pago == 'bs_efec')
+                            @if($montocbs)
                             Bs {{ number_format($montocbs ?? 0, 2) }}
+                            @endif
                         @else
+                            @if($montocdol)
                             ${{ number_format($montocdol ?? 0, 2) }}
+                            @endif
                         @endif
                     </span>
                 </div>

@@ -129,6 +129,9 @@
                                     @if($registro->metodo_pago == 'USDT')
                                     usdt
                                     @endif
+                                    @if($registro->metodo_pago == 'biopago')
+                                    Biopago
+                                    @endif
                                 </span>
                         </td>
 

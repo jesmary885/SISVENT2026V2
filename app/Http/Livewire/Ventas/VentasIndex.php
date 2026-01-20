@@ -213,6 +213,7 @@ class VentasIndex extends Component
     public function render()
     {
         $registros = Venta::latest('id')
+            ->where('estado_pago','pagado')
             ->paginate($this->perPage);
 
         return view('livewire.ventas.ventas-index', compact('registros'));
