@@ -19,20 +19,10 @@ return new class extends Migration
             $table->string('nombre');
             $table->string('cod_barra')->nullable();
             $table->string('estado')->nullable();
-            //$table->enum('estado',['Habilitado','Deshabilitado'])->default('Habilitado');
-            $table->integer('cantidad')->default(0);
-            $table->string('presentacion')->nullable();
-           
-            $table->string('categoria')->nullable();
-
-            $table->string('precio_venta');
-
-            //$table->enum('presentacion',['Unidad','Libra','Kg','Caja','Paquete','Lata','Galon','Botella','Tira','Sobre','Saco','Tarjeta','Otro'])->default('Unidad');
+            $table->decimal('stock_base', 12, 3)->default(0);
+            $table->string('unidad_base')->default('unidad'); // unidad | kg
             $table->integer('stock_minimo');
-            // $table->enum('vencimiento',['Si','No'])->default('No');
-           $table->enum('exento',['Si','No'])->default('Si')->nullable();
-          
-
+            $table->enum('exento',['Si','No'])->default('Si')->nullable();
             $table->unsignedBigInteger('marca_id');
             $table->foreign('marca_id')->references('id')->on('marcas');
 

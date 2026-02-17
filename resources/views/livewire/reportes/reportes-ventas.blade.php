@@ -20,17 +20,49 @@
                 </div>
             </div>
 
-            <!-- Botón de exportación -->
-            <button wire:click="exportarPDF" 
+
+            <div class="flex justify-end">
+
+                    <!-- Botón de exportación -->
+                <button wire:click="exportarPDF"
                     wire:loading.attr="disabled"
+                    wire:target="exportarPDF"
                     class="bg-green-600 hover:bg-green-700 cursor-pointer text-white px-4 py-2 rounded-lg font-semibold transition duration-200 flex items-center space-x-2">
+                
                 <i class="fas fa-file-pdf"></i>
-                <span wire:loading.remove>Exportar a PDF</span>
-                <span wire:loading>
+
+                <span wire:loading.remove wire:target="exportarPDF">
+                    Exportar a PDF
+                </span>
+
+                <span wire:loading wire:target="exportarPDF">
                     <i class="fas fa-spinner fa-spin"></i>
                     Generando...
                 </span>
             </button>
+
+                <button wire:click="exportarExcel"
+                    wire:loading.attr="disabled"
+                    wire:target="exportarExcel"
+                    class="bg-green-600 hover:bg-green-700 ml-2 cursor-pointer text-white px-4 py-2 rounded-lg font-semibold transition duration-200 flex items-center space-x-2">
+                
+                <i class="fas fa-file-excel"></i>
+
+                <span wire:loading.remove wire:target="exportarExcel">
+                    Exportar a Excel
+                </span>
+
+                <span wire:loading wire:target="exportarExcel">
+                    <i class="fas fa-spinner fa-spin"></i>
+                    Generando...
+                </span>
+            </button>
+
+
+            </div>
+            
+
+            
         </div>
     </div>
 
@@ -74,52 +106,221 @@
     </div>
 
     <!-- DESGLOSE DE EGRESOS (nueva sección) -->
-    <div class="bg-white rounded-2xl p-6 shadow-lg border border-gray-200">
-        <h3 class="text-xl font-bold text-gray-800 mb-4 flex items-center">
-            <i class="fas fa-money-bill-wave text-red-500 mr-2"></i>
-            Desglose de Egresos (Inversiones)
-        </h3>
-        
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <!-- Costo de Ventas -->
-            <div class="bg-red-50 border border-red-200 rounded-xl p-4">
-                <div class="flex items-center justify-between">
-                    <div>
-                        <p class="text-red-800 font-semibold">Costo de Ventas</p>
-                        <p class="text-red-600 text-sm">Productos vendidos</p>
-                    </div>
-                    <div class="text-right">
-                        <p class="text-2xl font-bold text-red-700">${{ number_format($desgloseEgresos['costo_ventas'] ?? 0, 2) }}</p>
-                        <p class="text-red-600 text-xs">costo real</p>
-                    </div>
-                </div>
+    <!-- DESGLOSE DE EGRESOS (nueva sección) -->
+<!-- MÉTRICAS PRINCIPALES SIMPLIFICADAS -->
+<div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+    <!-- Ventas Totales -->
+    <div class="bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-2xl p-6 shadow-lg">
+        <div class="flex items-center justify-between">
+            <div>
+                <p class="text-blue-100 text-sm">Ingresos por Ventas</p>
+                <p class="text-2xl font-bold">${{ number_format($ingresosTotales, 2) }}</p>
+                <p class="text-blue-100 text-xs mt-1">{{ $totalVentasPeriodo }} transacciones</p>
             </div>
-            
-            <!-- Compras del Negocio -->
-     
-            <!-- Total Egresos -->
-            <div class="bg-purple-50 border border-purple-200 rounded-xl p-4">
-                <div class="flex items-center justify-between">
-                    <div>
-                        <p class="text-purple-800 font-semibold">Total Egresos</p>
-                        <p class="text-purple-600 text-sm">Inversión total</p>
-                    </div>
-                    <div class="text-right">
-                        <p class="text-2xl font-bold text-purple-700">${{ number_format($egresosTotales, 2) }}</p>
-                        <p class="text-purple-600 text-xs">Costo + Compras</p>
-                    </div>
-                </div>
-            </div>
+            <i class="fas fa-money-bill-wave text-2xl opacity-80"></i>
         </div>
-        
-        @if($desgloseEgresos['total_compras_bolivares'] > 0)
-        <div class="mt-4 text-center text-sm text-gray-600">
-            <i class="fas fa-info-circle"></i>
-            Compras en Bolívares: Bs. {{ number_format($desgloseEgresos['total_compras_bolivares'], 2) }}
-        </div>
-        @endif
     </div>
 
+    <!-- Ganancia Bruta -->
+    <div class="bg-gradient-to-r from-green-500 to-green-600 text-white rounded-2xl p-6 shadow-lg">
+        <div class="flex items-center justify-between">
+            <div>
+                <p class="text-green-100 text-sm">Ganancia Bruta</p>
+                <p class="text-2xl font-bold">${{ number_format($gananciaBruta, 2) }}</p>
+                <p class="text-green-100 text-xs mt-1">(Ventas - Costo Ventas)</p>
+            </div>
+            <i class="fas fa-chart-line text-2xl opacity-80"></i>
+        </div>
+    </div>
+
+    <!-- Egresos Totales -->
+    <div class="bg-gradient-to-r from-red-500 to-red-600 text-white rounded-2xl p-6 shadow-lg">
+        <div class="flex items-center justify-between">
+            <div>
+                <p class="text-red-100 text-sm">Egresos en Compras</p>
+                <p class="text-2xl font-bold">${{ number_format($egresosTotales, 2) }}</p>
+                <p class="text-red-100 text-xs mt-1">inversión en inventario</p>
+            </div>
+            <i class="fas fa-shopping-cart text-2xl opacity-80"></i>
+        </div>
+    </div>
+</div>
+
+<!-- DESGLOSE DETALLADO DE EGRESOS POR MONEDA -->
+<!-- RESUMEN DE EGRESOS -->
+<div class="bg-white rounded-2xl p-6 shadow-lg border border-gray-200">
+    <h3 class="text-xl font-bold text-gray-800 mb-4 flex items-center">
+        <i class="fas fa-money-bill-wave text-red-500 mr-2"></i>
+        Desglose de Egresos (Compras por Moneda)
+    </h3>
+    
+    <!-- COMPRAS EN DÓLARES -->
+    <div class="mb-6">
+        <div class="flex items-center justify-between mb-3">
+            <h4 class="text-lg font-semibold text-gray-700 flex items-center">
+                <i class="fas fa-dollar-sign text-green-500 mr-2"></i>
+                Compras en Dólares (USD)
+            </h4>
+            <span class="bg-green-100 text-green-800 px-3 py-1 rounded-full text-sm font-medium">
+                {{ $desgloseEgresos['compras_dolares'] ?? 0 }} compras
+            </span>
+        </div>
+        
+        <div class="bg-green-50 border-2 border-green-200 rounded-xl p-5">
+            <div class="text-center">
+                <p class="text-3xl font-bold text-green-700 mb-1">
+                    ${{ number_format($desgloseEgresos['compras_dolares'] ?? 0, 2) }}
+                </p>
+                <p class="text-green-600">Total en dólares</p>
+            </div>
+        </div>
+    </div>
+    
+    <!-- COMPRAS EN BOLÍVARES -->
+    <div>
+        <div class="flex items-center justify-between mb-3">
+            <h4 class="text-lg font-semibold text-gray-700 flex items-center">
+                <i class="fas fa-bolt text-blue-500 mr-2"></i>
+                Compras en Bolívares (VES)
+            </h4>
+            <span class="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm font-medium">
+                {{ $desgloseEgresos['compras_bolivares'] ?? 0 }} compras
+            </span>
+        </div>
+        
+        <div class="bg-blue-50 border-2 border-blue-200 rounded-xl p-5">
+            <div class="text-center">
+                <p class="text-3xl font-bold text-blue-700 mb-1">
+                    Bs. {{ number_format($desgloseEgresos['compras_bolivares'] ?? 0, 2) }}
+                </p>
+                <p class="text-blue-600">Total en bolívares</p>
+                
+                <!-- Conversión a dólares (opcional) -->
+                @if(($desgloseEgresos['total_compras_usd_equivalente'] ?? 0) > 0)
+                <div class="mt-3 pt-3 border-t border-blue-300">
+                    <p class="text-sm text-gray-600">Equivalente en dólares:</p>
+                    <p class="text-xl font-bold text-purple-600">
+                        ≈ ${{ number_format($desgloseEgresos['total_compras_usd_equivalente'], 2) }}
+                    </p>
+                    <p class="text-xs text-gray-500 mt-1">
+                        Tasa: 1 USD = Bs. {{ number_format($this->obtenerTasaCambio(), 2) }}
+                    </p>
+                </div>
+                @endif
+            </div>
+        </div>
+    </div>
+    
+    <!-- RESUMEN FINAL -->
+    <div class="mt-6 pt-6 border-t border-gray-300">
+        <div class="flex justify-between items-center">
+            <div>
+                <p class="font-bold text-gray-800">Resumen de Compras</p>
+                <p class="text-sm text-gray-600">
+                    Total: {{ $totalComprasPeriodo }} compras registradas
+                </p>
+            </div>
+            <div class="text-right">
+                <p class="text-lg font-bold text-gray-800">
+                    Total Egresos: 
+                    <span class="text-red-600">${{ number_format($egresosTotales, 2) }}</span>
+                </p>
+                <p class="text-sm text-gray-600">
+                    Inversión total en inventario
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<!-- RESUMEN FINAL DE GANANCIAS -->
+<div class="bg-white rounded-2xl p-6 shadow-lg border border-gray-200 mt-6">
+    <h3 class="text-xl font-bold text-gray-800 mb-4">Resumen Financiero</h3>
+    
+    <div class="space-y-4">
+        <!-- Ingresos -->
+        <div class="flex justify-between items-center p-3 bg-blue-50 rounded-lg">
+            <div class="flex items-center">
+                <i class="fas fa-arrow-down text-green-500 text-xl mr-3"></i>
+                <div>
+                    <p class="font-semibold text-gray-800">Ingresos por Ventas</p>
+                    <p class="text-sm text-gray-600">Total de ventas realizadas</p>
+                </div>
+            </div>
+            <div class="text-right">
+                <p class="text-xl font-bold text-blue-600">${{ number_format($ingresosTotales, 2) }}</p>
+            </div>
+        </div>
+        
+        <!-- Costo de Ventas -->
+        <div class="flex justify-between items-center p-3 bg-yellow-50 rounded-lg">
+            <div class="flex items-center">
+                <i class="fas fa-box text-yellow-500 text-xl mr-3"></i>
+                <div>
+                    <p class="font-semibold text-gray-800">Costo de Ventas</p>
+                    <p class="text-sm text-gray-600">Valor de los productos vendidos</p>
+                </div>
+            </div>
+            <div class="text-right">
+                <p class="text-xl font-bold text-yellow-600">${{ number_format($desgloseEgresos['costo_ventas'] ?? 0, 2) }}</p>
+            </div>
+        </div>
+        
+        <!-- Ganancia Bruta -->
+        <div class="flex justify-between items-center p-3 bg-green-50 rounded-lg border-2 border-green-200">
+            <div class="flex items-center">
+                <i class="fas fa-chart-line text-green-500 text-xl mr-3"></i>
+                <div>
+                    <p class="font-bold text-gray-800">GANANCIA BRUTA</p>
+                    <p class="text-sm text-green-600">(Ventas - Costo de Ventas)</p>
+                </div>
+            </div>
+            <div class="text-right">
+                <p class="text-2xl font-bold text-green-600">${{ number_format($gananciaBruta, 2) }}</p>
+            </div>
+        </div>
+        
+        <!-- Egresos en Compras -->
+        <div class="flex justify-between items-center p-3 bg-red-50 rounded-lg">
+            <div class="flex items-center">
+                <i class="fas fa-shopping-cart text-red-500 text-xl mr-3"></i>
+                <div>
+                    <p class="font-semibold text-gray-800">Egresos en Compras</p>
+                    <p class="text-sm text-gray-600">Inversión en inventario nuevo</p>
+                </div>
+            </div>
+            <div class="text-right">
+                <p class="text-xl font-bold text-red-600">${{ number_format($egresosTotales, 2) }}</p>
+            </div>
+        </div>
+        
+        <!-- Ganancia Neta (opcional mostrar) -->
+        @php
+            $gananciaNeta = $desgloseEgresos['ganancia_neta'] ?? 0;
+        @endphp
+        
+        <div class="flex justify-between items-center p-3 {{ $gananciaNeta >= 0 ? 'bg-green-100' : 'bg-red-100' }} rounded-lg border-2 {{ $gananciaNeta >= 0 ? 'border-green-300' : 'border-red-300' }}">
+            <div class="flex items-center">
+                <i class="fas fa-calculator {{ $gananciaNeta >= 0 ? 'text-green-500' : 'text-red-500' }} text-xl mr-3"></i>
+                <div>
+                    <p class="font-bold text-gray-800">GANANCIA NETA</p>
+                    <p class="text-sm {{ $gananciaNeta >= 0 ? 'text-green-600' : 'text-red-600' }}">
+                        (Ganancia Bruta - Compras nuevas)
+                    </p>
+                </div>
+            </div>
+            <div class="text-right">
+                <p class="text-2xl font-bold {{ $gananciaNeta >= 0 ? 'text-green-600' : 'text-red-600' }}">
+                    ${{ number_format($gananciaNeta, 2) }}
+                </p>
+                <p class="text-xs {{ $gananciaNeta >= 0 ? 'text-green-600' : 'text-red-600' }}">
+                    {{ $gananciaNeta >= 0 ? 'SALDO POSITIVO' : 'SALDO NEGATIVO' }}
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
     <!-- Detalle de Compras Realizadas -->
 <!-- SECCIÓN DE COMPRAS DEL NEGOCIO (NUEVA) -->
 <div class="bg-white rounded-2xl p-6 shadow-lg border border-gray-200 mt-6">
@@ -213,7 +414,7 @@
                     </td>
                     <td class="py-3 px-4">
                         <div class="font-medium">
-                            {{ $compra->proveedor->nombre ?? 'N/A' }}
+                            {{ $compra->proveedor->nombre_proveedor ?? 'N/A' }}
                         </div>
                         @if($compra->proveedor->telefono ?? false)
                         <div class="text-xs text-gray-500">
@@ -384,7 +585,7 @@
                         <span class="text-white font-bold">{{ $index + 1 }}</span>
                     </div>
                     <div>
-                        <div class="font-semibold text-gray-800">{{ $producto->nombre }}</div>
+                        <div class="font-semibold text-gray-800">{{ $producto->producto_nombre }}  ({{ ucfirst($producto->presentacion_nombre) }})</div>
                         <div class="text-sm text-gray-600">
                             {{ number_format($producto->unidades_vendidas) }} unidades
                         </div>
@@ -502,19 +703,23 @@
         @if(count($ventasPorDia) > 0)
         <div class="space-y-3">
             @foreach($ventasPorDia as $dia)
-            <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                <div class="font-semibold text-gray-800">{{ $dia['fecha'] }}</div>
-                <div class="flex items-center space-x-6">
-                    <div class="text-center">
-                        <div class="text-sm text-gray-500">Ventas</div>
-                        <div class="font-bold text-gray-800">{{ $dia['ventas'] }}</div>
+
+                @if($dia['ventas'] > 0)
+                    <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                        <div class="font-semibold text-gray-800">{{ $dia['fecha'] }}</div>
+                        <div class="flex items-center space-x-6">
+                            <div class="text-center">
+                                <div class="text-sm text-gray-500">Ventas</div>
+                                <div class="font-bold text-gray-800">{{ $dia['ventas'] ?? 0 }}</div>
+                            </div>
+                            <div class="text-center">
+                                <div class="text-sm text-gray-500">Total</div>
+                                <div class="font-bold text-green-600">${{ number_format($dia['ingresos'], 2) }}</div>
+                            </div>
+                        </div>
                     </div>
-                    <div class="text-center">
-                        <div class="text-sm text-gray-500">Total</div>
-                        <div class="font-bold text-green-600">${{ number_format($dia['total'], 2) }}</div>
-                    </div>
-                </div>
-            </div>
+
+                @endif
             @endforeach
         </div>
         @else

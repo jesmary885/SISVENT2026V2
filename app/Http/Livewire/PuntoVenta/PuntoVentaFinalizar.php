@@ -10,6 +10,7 @@ use App\Models\Tasa;
 use App\Models\Venta;
 use App\Models\Deuda;
 use App\Models\Negocio; // NUEVO
+use App\Models\ProductoPresentaciones;
 use Livewire\Component;
 
 class PuntoVentaFinalizar extends Component
@@ -138,7 +139,7 @@ class PuntoVentaFinalizar extends Component
     {
         $registros = CarroCompra::where('user_id', $this->user_id)
             ->where('estado', 'abierta')
-            ->with('producto')
+            ->with('producto_presentacion')
             ->get();
 
         $total_global = 0;
@@ -147,15 +148,15 @@ class PuntoVentaFinalizar extends Component
         $subtotal_sin_iva = 0;
 
         foreach($registros as $registro) {
-            $producto = $registro->producto;
-            $precio = floatval($producto->precio_venta);
+            $producto = $registro->producto_presentacion;
+            $precio = floatval($producto->precio_usd);
             $cantidad = floatval($registro->cantidad);
             $subtotal = $precio * $cantidad;
             
             $subtotal_sin_iva += $subtotal;
             
             // Verificar si el producto está exento de IVA
-            if ($this->facturar_con_iva && ($producto->exento ?? 'Si') == 'No') {
+            if ($this->facturar_con_iva && ($producto->producto->exento ?? 'Si') == 'No') {
                 // Producto NO exento - calcular IVA
                 $iva_producto = $subtotal * ($this->porcentaje_iva / 100);
                 $total_iva += $iva_producto;
@@ -446,23 +447,20 @@ class PuntoVentaFinalizar extends Component
             ->get();
 
         foreach($registros as $registro) {
-            $precio_total_bs = floatval($registro->producto->precio_venta) * $this->tasa_actual;
+            $precio_total_bs = floatval($registro->producto_presentacion->precio_usd) * $this->tasa_actual;
 
             $producto_venta = new ProductoVenta();
             $producto_venta->venta_id = $venta->id;
-            $producto_venta->producto_id = $registro->producto->id;
-            $producto_venta->precio_dolares = floatval($registro->producto->precio_venta);
+            $producto_venta->producto_presentacion_id = $registro->producto_presentacion_id;
+            $producto_venta->precio_dolares = floatval($registro->producto_presentacion->precio_usd);
             $producto_venta->precio_bolivares = $precio_total_bs;
             $producto_venta->cantidad = $registro->cantidad;
             $producto_venta->save();
 
-            // Actualizar stock del producto
-            $producto = Producto::where('id', $registro->producto->id)->first();
-            $cantidad_new = $producto->cantidad - $registro->cantidad;
+         
 
-            $producto->update([
-                'cantidad' => $cantidad_new
-            ]);
+            // Actualizar stock del producto
+            
 
             // Cerrar item del carrito
             $registro->update([
@@ -499,7 +497,7 @@ class PuntoVentaFinalizar extends Component
         $ruta = $this->tipo_comprobante == 'ticket' 
             ? route('ticket.pdf', ['venta' => $ventaId])  
             : route('factura.pdf', ['venta' => $ventaId]); 
-        
+         
         $this->dispatchBrowserEvent('imprimir-comprobante', [
             'url' => $ruta,
             'venta_id' => $ventaId,
@@ -517,7 +515,7 @@ class PuntoVentaFinalizar extends Component
         $totalManual = 0;
         
         foreach($registros as $registro) {
-            $subtotal = floatval($registro->producto->precio_venta) * floatval($registro->cantidad);
+            $subtotal = floatval($registro->producto_presentacion->precio_usd) * floatval($registro->cantidad);
             $totalManual += $subtotal;
         }
         

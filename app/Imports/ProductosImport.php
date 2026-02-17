@@ -4,245 +4,171 @@ namespace App\Imports;
 
 use App\Models\Producto;
 use App\Models\Marca;
+use App\Models\ProductoPresentacion;
+use App\Models\ProductoPresentaciones;
 use Illuminate\Support\Collection;
 use Maatwebsite\Excel\Concerns\ToCollection;
 use Maatwebsite\Excel\Concerns\WithHeadingRow;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
+use Maatwebsite\Excel\Concerns\SkipsEmptyRows;
 
-class ProductosImport implements ToCollection, WithHeadingRow
+
+
+class ProductosImport implements ToCollection, WithHeadingRow, SkipsEmptyRows
 {
-    private $errors = [];
-    private $successCount = 0;
-    private $updatedCount = 0;
-    private $createdCount = 0;
+    protected $errors = [];
+    protected $successCount = 0;
+    protected $created = 0;
+    protected $updated = 0;
 
+    public function model(array $row)
+    {
+        // 🔥 Ignorar fila completamente vacía
+        if (collect($row)->filter()->isEmpty()) {
+            return null;
+        }
+
+        // 🔥 Ignorar si no tiene nombre
+        if (empty($row['nombre'])) {
+            return null;
+        }
+
+        return new Producto([
+            'nombre' => $row['nombre'],
+            'codigo_de_barras' => $row['codigo_de_barras'] ?? null,
+            'marca' => $row['marca'] ?? null,
+            'stock_minimo' => $row['stock_minimo'] ?? 0,
+        ]);
+    }
+    
     public function collection(Collection $rows)
     {
-        $rowNumber = 2; // Empieza desde la fila 2 (después del encabezado)
+        $rowNumber = 2;
 
         foreach ($rows as $row) {
+
             try {
-                // Validar que la fila tenga datos
-                if (empty($row['nombre']) && empty($row['codigo_de_barras'])) {
-                    $this->errors[] = [
-                        'fila' => $rowNumber,
-                        'errores' => ['La fila está vacía o falta el nombre del producto'],
-                        'datos' => $row->toArray()
-                    ];
-                    $rowNumber++;
-                    continue;
-                }
 
-                // Preparar datos - CONVERSIÓN CORRECTA DE TIPOS
                 $data = [
-                    'nombre' => $this->convertToString($row['nombre'] ?? null),
-                    'cod_barra' => $this->processCodigoBarras($row['codigo_de_barras'] ?? $row['cod_barra'] ?? null),
-                    'cantidad' => intval($row['cantidad_en_stock'] ?? $row['cantidad'] ?? 0),
-                    'presentacion' => $this->convertToString($row['presentacion'] ?? null),
-                    'categoria' => $this->convertToString($row['categoria'] ?? null),
-                    'precio_venta' => floatval($row['precio_de_venta'] ?? $row['precio_venta'] ?? 0),
-                    'stock_minimo' => intval($row['stock_minimo'] ?? 5),
-                    'exento' => in_array($row['exento'] ?? 'Si', ['Si', 'No']) ? $row['exento'] : 'Si',
-                    'estado' => $this->convertToString($row['estado'] ?? 'Activo'),
+                    'nombre' => trim($row['nombre'] ?? ''),
+                    'cod_barra' => $row['codigo_de_barras'] ?? null,
                     'marca_id' => $this->getMarcaId($row['marca'] ?? null),
+                    'stock_minimo' => intval($row['stock_minimo'] ?? 0),
+                    'exento' => in_array($row['exento'] ?? 'Si', ['Si','No']) ? $row['exento'] : 'Si',
+                    'estado' => $row['estado'] ?? 'Activo',
+                    'presentacion' => strtolower(trim($row['presentacion'] ?? '')),
+                    'factor' => floatval($row['factor'] ?? 0),
+                    'precio' => floatval($row['precio'] ?? 0),
+                    'cantidad' => floatval($row['cantidad'] ?? 0),
                 ];
 
-                // Buscar producto existente para excluirlo de la validación unique
-                $productoExistente = null;
-                if (!empty($data['cod_barra'])) {
-                    $productoExistente = Producto::where('cod_barra', $data['cod_barra'])->first();
-                }
-                
-                if (!$productoExistente && !empty($data['nombre'])) {
-                    $productoExistente = Producto::where('nombre', $data['nombre'])->first();
-                }
-
-                // Reglas de validación
-                $rules = [
-                    'nombre' => 'required|string|max:255',
-                    'cod_barra' => 'nullable|string|max:255',
-                    'cantidad' => 'required|integer|min:0',
-                    'precio_venta' => 'required|numeric|min:0',
-                    'stock_minimo' => 'required|integer|min:0',
-                    'exento' => 'required|in:Si,No',
-                    'marca_id' => 'required|exists:marcas,id',
-                ];
-
-                // Regla unique condicional para código de barras
-                if (!empty($data['cod_barra'])) {
-                    if ($productoExistente && $productoExistente->cod_barra === $data['cod_barra']) {
-                        // Permitir actualización del mismo producto
-                        // No aplicar unique
-                    } else {
-                        // Validar unique solo para nuevos productos
-                        $rules['cod_barra'] = 'nullable|string|max:255|unique:productos,cod_barra';
-                    }
-                }
-
-                $validator = Validator::make($data, $rules, [
-                    'nombre.required' => 'El nombre del producto es requerido',
-                    'precio_venta.required' => 'El precio de venta es requerido',
-                    'precio_venta.numeric' => 'El precio de venta debe ser un número',
-                    'marca_id.required' => 'La marca es requerida',
-                    'marca_id.exists' => 'La marca no existe en el sistema',
-                    'cod_barra.unique' => 'El código de barras ya existe en otro producto',
-                    'cod_barra.string' => 'El código de barras debe ser texto',
+                $validator = Validator::make($data, [
+                    'nombre' => 'required',
+                    'presentacion' => 'required|in:unidad,caja',
+                    'factor' => 'required|numeric|min:1',
+                    'precio' => 'required|numeric|min:0',
                 ]);
 
                 if ($validator->fails()) {
-                    $this->errors[] = [
-                        'fila' => $rowNumber,
-                        'errores' => $validator->errors()->all(),
-                        'datos' => $data
-                    ];
+                    $this->addError($rowNumber, $validator->errors()->all(), $row);
                     $rowNumber++;
                     continue;
                 }
 
-                // Buscar o crear producto
-                $producto = null;
-                
-                // Buscar por código de barras primero
-                if (!empty($data['cod_barra'])) {
-                    $producto = Producto::where('cod_barra', $data['cod_barra'])->first();
-                }
-                
-                // Si no se encontró por código de barras, buscar por nombre
-                if (!$producto && !empty($data['nombre'])) {
-                    $producto = Producto::where('nombre', $data['nombre'])->first();
-                }
+                DB::transaction(function () use ($data) {
 
-                if ($producto) {
-                    // Actualizar producto existente
-                    $producto->update($data);
-                    $this->updatedCount++;
+                    // 🧮 calcular stock_base
+                    if ($data['presentacion'] == 'unidad') {
+                        $stockBase = $data['cantidad'];
+                    } else {
+                        $stockBase = $data['cantidad'] * $data['factor'];
+                    }
+
+                    $producto = Producto::where('cod_barra', $data['cod_barra'])
+                        ->orWhere('nombre', $data['nombre'])
+                        ->first();
+
+                    if ($producto) {
+
+                        $producto->update([
+                            'nombre' => $data['nombre'],
+                            'cod_barra' => $data['cod_barra'],
+                            'stock_base' => $stockBase,
+                            'unidad_base' => 'unidad',
+                            'stock_minimo' => $data['stock_minimo'],
+                            'exento' => $data['exento'],
+                            'estado' => $data['estado'],
+                            'marca_id' => $data['marca_id'],
+                        ]);
+
+                        $this->updated++;
+
+                    } else {
+
+                        $producto = Producto::create([
+                            'nombre' => $data['nombre'],
+                            'cod_barra' => $data['cod_barra'],
+                            'stock_base' => $stockBase,
+                            'unidad_base' => 'unidad',
+                            'stock_minimo' => $data['stock_minimo'],
+                            'exento' => $data['exento'],
+                            'estado' => $data['estado'],
+                            'marca_id' => $data['marca_id'],
+                        ]);
+
+                        $this->created++;
+                    }
+
+                    ProductoPresentaciones::updateOrCreate(
+                        [
+                            'producto_id' => $producto->id,
+                            'nombre' => $data['presentacion'], // SOLO unidad o caja
+                        ],
+                        [
+                            'factor_base' => $data['factor'],
+                            'precio_usd' => $data['precio'],
+                            'activo' => true,
+                            'cantidad_de_cajas' =>
+                                $data['presentacion'] == 'caja'
+                                ? $data['cantidad']
+                                : null
+                        ]
+                    );
+
                     $this->successCount++;
-                } else {
-                    // Crear nuevo producto
-                    Producto::create($data);
-                    $this->createdCount++;
-                    $this->successCount++;
-                }
+                });
 
             } catch (\Exception $e) {
-                $this->errors[] = [
-                    'fila' => $rowNumber,
-                    'errores' => ['Error inesperado: ' . $e->getMessage()],
-                    'datos' => $row->toArray()
-                ];
+                $this->addError($rowNumber, [$e->getMessage()], $row);
             }
 
             $rowNumber++;
         }
     }
 
-    /**
-     * Convierte cualquier valor a string, manejando números grandes correctamente
-     */
-    private function convertToString($value)
-    {
-        if (is_null($value)) {
-            return null;
-        }
-
-        if (is_numeric($value) && $value > PHP_INT_MAX) {
-            // Para números muy grandes (como códigos de barras)
-            return (string)$value;
-        }
-
-        if (is_float($value)) {
-            // Para evitar notación científica en floats
-            return number_format($value, 2, '.', '');
-        }
-
-        return (string)$value;
-    }
-
-        /**
-     * Procesa específicamente códigos de barras
-     */
-    private function processCodigoBarras($value)
-    {
-        if (empty($value)) {
-            return null;
-        }
-
-        $value = trim($value);
-        
-        // 1. Limpiar formato Excel forzado
-        if (preg_match('/^="([^"]+)"$/', $value, $matches)) {
-            $value = $matches[1];
-        } elseif (preg_match("/^='([^']+)'$/", $value, $matches)) {
-            $value = $matches[1];
-        }
-        
-        // 2. Si es numérico, manejarlo sin notación científica
-        if (is_numeric($value)) {
-            // Si es muy grande (más de 10 dígitos), asumir que es código de barras
-            if ($value > 999999999) {
-                // Forzar representación como string sin notación científica
-                return sprintf('%.0f', $value);
-            }
-            
-            // Para números normales, quitar decimales si los tiene
-            if (strpos($value, '.') !== false) {
-                return explode('.', $value)[0];
-            }
-            
-            return (string)$value;
-        }
-        
-        // 3. Limpiar espacios, saltos de línea, etc.
-        $value = preg_replace('/\s+/', '', $value);
-        
-        return $value;
-    }
-
     private function getMarcaId($marcaNombre)
     {
         if (empty($marcaNombre)) {
-            // Usar una marca por defecto
-            $marca = Marca::firstOrCreate(
-                ['nombre' => 'Generica'],
-                ['descripcion' => 'Marca genérica para importación']
-            );
-            return $marca->id;
+            return Marca::firstOrCreate(['nombre' => 'Generica'])->id;
         }
 
-        // Limpiar y estandarizar el nombre de la marca
-        $marcaNombre = trim($this->convertToString($marcaNombre));
-        $marcaNombre = ucfirst(strtolower($marcaNombre));
-
-        $marca = Marca::where('nombre', $marcaNombre)->first();
-
-        if (!$marca) {
-            // Crear nueva marca si no existe
-            $marca = Marca::create([
-                'nombre' => $marcaNombre,
-                'descripcion' => 'Creada automáticamente durante importación'
-            ]);
-        }
-
-        return $marca->id;
+        return Marca::firstOrCreate([
+            'nombre' => ucfirst(strtolower(trim($marcaNombre)))
+        ])->id;
     }
 
-    public function getErrors()
+    private function addError($fila, $errores, $datos)
     {
-        return $this->errors;
+        $this->errors[] = [
+            'fila' => $fila,
+            'errores' => $errores,
+            'datos' => $datos
+        ];
     }
 
-    public function getSuccessCount()
-    {
-        return $this->successCount;
-    }
-
-    public function getCreatedCount()
-    {
-        return $this->createdCount;
-    }
-
-    public function getUpdatedCount()
-    {
-        return $this->updatedCount;
-    }
+    public function getErrors() { return $this->errors; }
+    public function getSuccessCount() { return $this->successCount; }
+    public function getCreatedCount() { return $this->created; }
+    public function getUpdatedCount() { return $this->updated; }
 }

@@ -19,11 +19,11 @@ return new class extends Migration
             $table->unsignedBigInteger('venta_id');
             $table->foreign('venta_id')->references('id')->on('ventas');
 
-            $table->unsignedBigInteger('producto_id');
-            $table->foreign('producto_id')->references('id')->on('productos');
+            $table->unsignedBigInteger('producto_presentacion_id');
+            $table->foreign('producto_presentacion_id')->references('id')->on('producto_presentaciones');
             
-            $table->float('precio_dolares');
-            $table->float('precio_bolivares');
+            $table->decimal('precio_dolares', 15, 2);
+            $table->decimal('precio_bolivares', 15, 2);
             $table->string('cantidad');
 
 

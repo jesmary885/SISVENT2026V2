@@ -523,11 +523,11 @@
                         @forelse ($registros as $registro)
                             <div class="flex items-center justify-between mb-3 p-4 bg-white/80 backdrop-blur-sm rounded-xl border border-amber-100 hover:bg-white hover:shadow-md transition-all duration-300 group">
                                 <div class="flex-1 min-w-0">
-                                    <h3 class="font-semibold text-gray-800 text-sm truncate group-hover:text-blue-600">{{$registro->nombre}}</h3>
+                                    <h3 class="font-semibold text-gray-800 text-sm truncate group-hover:text-blue-600">{{$registro->producto->nombre}} ({{$registro->nombre}})</h3>
                                     <div class="flex items-center gap-3 mt-2">
-                                        <span class="font-bold text-gray-900">Bs {{ number_format($this->precio_bolivares($registro->precio_venta), 2, ',', '.') }}</span>
+                                        <span class="font-bold text-gray-900">Bs {{ number_format($this->precio_bolivares($registro->precio_usd), 2, ',', '.') }}</span>
                                         <span class="bg-yellow-100 text-yellow-800 text-xs font-medium px-3 py-1 rounded-full border border-yellow-300">
-                                            $ {{ number_format($registro->precio_venta, 2, ',', '.') }}
+                                            $ {{ number_format($registro->precio_usd, 2, ',', '.') }}
                                         </span>
                                     </div>
                                 </div>
@@ -584,7 +584,7 @@
                                             <div class="w-8 h-8 bg-blue-500 rounded-lg flex items-center justify-center mr-3">
                                                 <i class="fas fa-box text-white text-xs"></i>
                                             </div>
-                                            <span class="font-medium text-gray-800 text-sm">{{$registro_c->producto->nombre}}</span>
+                                            <span class="font-medium text-gray-800 text-sm">{{$registro_c->producto_presentacion->producto->nombre}}</span>
                                         </div>
                                     </td>
                                     <td class="px-4 py-3 text-center">
@@ -594,15 +594,15 @@
                                     </td>
                                     <td class="px-4 py-3 text-center">
                                         <div class="flex flex-col items-center space-y-1">
-                                            <span class="font-bold text-gray-900">Bs {{ number_format($this->subtotal_bol($registro_c->producto_id,$registro_c->cantidad), 2, ',', '.') }}</span>
+                                            <span class="font-bold text-gray-900">Bs {{ number_format($this->subtotal_bol($registro_c->producto_presentacion_id,$registro_c->cantidad), 2, ',', '.') }}</span>
                                             <span class="bg-green-100 text-green-800 text-xs font-medium px-2 py-1 rounded-full border border-green-300">
-                                                REF. ${{ number_format($this->subtotal_dol($registro_c->producto_id,$registro_c->cantidad), 2, ',', '.') }}
+                                                REF. ${{ number_format($this->subtotal_dol($registro_c->producto_presentacion_id,$registro_c->cantidad), 2, ',', '.') }}
                                             </span>
                                         </div>
                                     </td>
                                     <td class="px-4 py-3 text-center">
                                         <button
-                                            wire:click="delete('{{$registro_c->id}}')"
+                                            wire:click="delete({{$registro_c}})"
                                             wire:loading.class="opacity-50"
                                             class="w-10 h-10 bg-red-500 hover:bg-red-600 text-white rounded-xl flex items-center justify-center transition-all duration-300 transform hover:scale-110 group-hover:shadow-lg"
                                             title="Eliminar del carrito"

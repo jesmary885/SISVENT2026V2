@@ -200,6 +200,14 @@
             });
         </script>
 
+        <script>
+            document.addEventListener('livewire:load', () => {
+                window.addEventListener('unauthorized', () => {
+                    location.reload();
+                });
+            });
+        </script>
+
 
 
 

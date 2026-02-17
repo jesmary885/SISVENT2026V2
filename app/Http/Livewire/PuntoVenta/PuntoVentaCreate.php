@@ -9,6 +9,7 @@ use App\Models\Tasa;
 use App\Models\Venta;
 use App\Models\Caja;
 use App\Models\Negocio; // NUEVO: Importar modelo Negocio
+use App\Models\ProductoPresentaciones;
 use Livewire\Component;
 
 class PuntoVentaCreate extends Component
@@ -573,7 +574,7 @@ class PuntoVentaCreate extends Component
    public function reanudarVenta($ventaId)
     {
         try {
-            $venta = Venta::with(['carroCompra.producto'])->find($ventaId);
+            $venta = Venta::with(['carroCompra.presentacion_producto'])->find($ventaId);
             
             if (!$venta || $venta->estado != Venta::ESTADO_PAUSADA) {
                 $this->dispatchBrowserEvent('notify', [
@@ -620,7 +621,7 @@ class PuntoVentaCreate extends Component
             foreach ($venta->carroCompra as $item) {
                 CarroCompra::create([
                     'user_id' => $this->user_id,
-                    'producto_id' => $item->producto_id,
+                    'producto_presentacion_id' => $item->producto_id,
                     'cantidad' => $item->cantidad,
                     'estado' => 'abierta',
                     'venta_id' => $venta->id
@@ -693,16 +694,27 @@ class PuntoVentaCreate extends Component
         $this->verificarCaja();
         
         if($this->search) {
-            $registros = Producto::where('nombre', 'LIKE', '%' . $this->search . '%')
+            /*$registros = Producto::where('nombre', 'LIKE', '%' . $this->search . '%')
                 ->orWhere('cod_barra', 'LIKE', '%' . $this->search . '%')
                 ->where('estado', 'Activo')
+                ->latest('id')
+                ->get();*/
+
+            $registros = ProductoPresentaciones::with('producto')
+                ->whereHas('producto', function ($query) {
+                    $query->where('nombre', 'LIKE', '%' . $this->search . '%')
+                        ->orWhere('cod_barra', 'LIKE', '%' . $this->search . '%')
+                        ->where('estado', 'Activo');
+                })
+                ->where('activo', true)
                 ->latest('id')
                 ->get();
         } else {
             $registros = [];
         }
 
-        $registros_carro = CarroCompra::where('estado', 'abierta')
+        $registros_carro = CarroCompra::with('producto_presentacion.producto')
+            ->where('estado', 'abierta')
             ->where('user_id', $this->user_id)
             ->get();
 
@@ -781,8 +793,10 @@ class PuntoVentaCreate extends Component
     {
         $registros = CarroCompra::where('user_id', $this->user_id)
             ->where('estado', 'abierta')
-            ->with('producto') // Asegurar que carga la relación
+            ->with('producto_presentacion') // Asegurar que carga la relación
             ->get();
+
+
 
         $total_global = 0;
         $total_iva = 0;
@@ -790,15 +804,17 @@ class PuntoVentaCreate extends Component
         $subtotal_sin_iva = 0;
 
         foreach($registros as $registro) {
-            $producto = $registro->producto;
-            $precio = floatval($producto->precio_venta);
+
+            $producto = $registro->producto_presentacion;
+          
+            $precio = floatval($producto->precio_usd);
             $cantidad = floatval($registro->cantidad);
             $subtotal = $precio * $cantidad;
             
             $subtotal_sin_iva += $subtotal;
             
             // Verificar si el producto está exento de IVA
-            if ($this->facturar_con_iva && ($producto->exento ?? 'Si') == 'No') {
+            if ($this->facturar_con_iva && ($producto->producto->exento ?? 'Si') == 'No') {
                 // Producto NO exento - calcular IVA usando porcentaje_iva del negocio
                 $iva_producto = $subtotal * ($this->porcentaje_iva / 100);
                 $total_iva += $iva_producto;
@@ -833,19 +849,19 @@ class PuntoVentaCreate extends Component
      */
     public function subtotal_dol($product, $cant)
     {
-        $producto = Producto::find($product);
+        $producto = ProductoPresentaciones::find($product);
         if (!$producto) return 0;
         
-        $precio_dolares = floatval($producto->precio_venta) * floatval($cant);
+        $precio_dolares = floatval($producto->precio_usd) * floatval($cant);
         return $precio_dolares;
     }
 
     public function subtotal_bol($product, $cant)
     {
-        $producto = Producto::find($product);
+        $producto = ProductoPresentaciones::find($product);
         if (!$producto) return 0;
         
-        $precio_dolares = floatval($producto->precio_venta) * floatval($cant);
+        $precio_dolares = floatval($producto->precio_usd) * floatval($cant);
         $precio_bs = $precio_dolares * floatval(Tasa::find(1)->tasa_actual);
         return $precio_bs;
     }
@@ -879,7 +895,10 @@ class PuntoVentaCreate extends Component
 
     public function delete($product)
     {
-        $prod_destroy = CarroCompra::where('id', $product)->first();
+
+        increase($product['producto_presentacion_id'],'1');
+
+        $prod_destroy = CarroCompra::where('id', $product['id'])->first();
         if($prod_destroy) {
             $prod_destroy->delete();
             

@@ -11,11 +11,9 @@ class CarroCompra extends Model
 
     protected $guarded = ['id','created_at','updated_at'];
 
-    //Relaion uno a muhos inversa
-  
 
-    public function producto(){
-        return $this->belongsTo(Producto::class);
+    public function producto_presentacion(){
+        return $this->belongsTo(ProductoPresentaciones::class);
     }
 
      public function user(){

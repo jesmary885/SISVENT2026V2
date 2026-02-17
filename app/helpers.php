@@ -2,21 +2,27 @@
 
 use App\Models\CarroCompra;
 use App\Models\Producto;
+use App\Models\ProductoPresentaciones;
 
+ function quantity($registro){
 
+    $registro = ProductoPresentaciones::where('id',$registro->id)->first();
 
- function quantity($producto_id){
+    if($registro->nombre == 'caja') $quantity = $registro->cantidad_de_cajas;
+    else{
 
-    $c = Producto::find($producto_id->id);
+        $producto = Producto::where('id',$registro->producto_id)->first();
+        $quantity = $producto->stock_base;
 
-    $quantity = $c->cantidad;
+    }
+
     return $quantity;
  }
 
-function qty_added($producto_id){
+function qty_added($registro){
  
     
-    $item = CarroCompra::where('producto_id', $producto_id->id)->first();
+    $item = CarroCompra::where('producto_presentacion_id', $registro->producto_id)->first();
 
     if($item){
         return $item->cantidad;
@@ -27,51 +33,92 @@ function qty_added($producto_id){
 }
 
 
-function qty_available($producto_id){
+function qty_available($registro){
 
-    $p = Producto::find($producto_id->id);
+    //$p = Producto::find($producto_id->id);
+
+    $registro = ProductoPresentaciones::where('id',$registro->id)->first();
+
+    if($registro->nombre == 'caja') $quantity = $registro->cantidad_de_cajas;
+    else{
+
+        $producto = Producto::where('id',$registro->producto_id)->first();
+        $quantity = $producto->stock_base;
+
+    }
 
 
-
-    //$producto_lote_select = Producto_lote::where('id',$producto_lote->id)->first();
-
-    $quantity = $p->cantidad;
-
-    return $quantity - qty_added($producto_id);
+    return $quantity - qty_added($registro);
 }
 
 
-/*function discount($item,$sucursal_id,$cant,$lote){
+function discount($item,$cant){
 
     // $producto = Producto::find($item->id);
 
-    $producto_lote = Producto_lote::where('id',$lote)->first();
+       $busqueda_compra = ProductoPresentaciones::where('id',$item->id)->first();
 
-    $qty_available = qty_available($item,$sucursal_id,$producto_lote);
+            if($busqueda_compra->nombre == 'unidad' || $busqueda_compra->nombre == 'kg'){
 
-    $pivot = Pivot::where('sucursal_id',$sucursal_id)
-        ->where('producto_id',$item)
-        ->where('lote',$producto_lote->lote)
-        ->first();
+                $producto = Producto::where('id', $busqueda_compra->producto_id)->first();
+                $cantidad_new = $producto->stock_base - $cant;
 
-    $pivot->cantidad = $pivot->cantidad - $cant;
-    $pivot->save();
+                $producto->update([
+                    'stock_base' => $cantidad_new
+                ]);
 
-    $producto_lote->update([
-        'stock' => ($producto_lote->stock - $cant)
-    ]);
+            }else{
+
+                $cantidad_new_caja = $busqueda_compra->cantidad_de_cajas - $cant;
+
+                $busqueda_compra->update([
+                    'cantidad_de_cajas' => $cantidad_new_caja
+                ]);
+
+                $cantidad_total_unidad = $busqueda_compra->factor_base * $cant;
+
+                $producto = Producto::where('id', $busqueda_compra->producto_id)->first();
+                $cantidad_new = $producto->stock_base - $cantidad_total_unidad;
+
+                $producto->update([
+                    'stock_base' => $cantidad_new
+                ]);
+
+            }
 }
 
-function increase($item,$sucursal_id){
+function increase($item,$cant){
 
-    // $producto = Producto::find($item->id);
-    $quantity = quantity($item->id,$sucursal_id) + $item->qty;
+     $busqueda_compra = ProductoPresentaciones::where('id',$item)->first();
 
-    $pivot = Pivot::where('sucursal_id',$sucursal_id)
-                         ->where('producto_id',$item->id)
-                         ->first();
+            if($busqueda_compra->nombre == 'unidad' || $busqueda_compra->nombre == 'kg'){
 
-    $pivot->cantidad = $quantity;
-    $pivot->save();
+                $producto = Producto::where('id', $busqueda_compra->producto_id)->first();
+                $cantidad_new = $producto->stock_base + $cant;
 
-}*/
+                $producto->update([
+                    'stock_base' => $cantidad_new
+                ]);
+
+            }else{
+
+                $cantidad_new_caja = $busqueda_compra->cantidad_de_cajas + $cant;
+
+                $busqueda_compra->update([
+                    'cantidad_de_cajas' => $cantidad_new_caja
+                ]);
+
+                $cantidad_total_unidad = $busqueda_compra->factor_base * $cant;
+
+                $producto = Producto::where('id', $busqueda_compra->producto_id)->first();
+                $cantidad_new = $producto->stock_base + $cantidad_total_unidad;
+
+                $producto->update([
+                    'stock_base' => $cantidad_new
+                ]);
+
+            }
+
+    
+
+}

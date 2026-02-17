@@ -110,7 +110,7 @@
      <button type="button" wire:click="$set('open',true)" type="button" wire:loading.attr="disabled" class=" cursor-pointer action-btn bg-green-500 hover:bg-green-600 text-white p-2 rounded-lg">
            <i class="fas fa-edit text-sm"></i>
         
-        </button>
+    </button>
 
     @endif
 
@@ -173,7 +173,7 @@
                             value="1"
                                 id="iva"
                                 type="checkbox"
-                                wire:model.defer="iva"
+                                wire:model="iva"
                                 class="w-4 h-4 text-purple-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 focus:ring-2"
                             >
                         </div>
@@ -199,7 +199,7 @@
                             <input 
                                 type="text" 
                                 id="nombre"
-                                wire:model.defer="nombre"
+                                wire:model="nombre"
                                 class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 bg-white placeholder-gray-400"
                                 placeholder="Ejemplo. Harina de maiz Maria de 1 kg"
                             >
@@ -230,77 +230,150 @@
                     </div>
 
                     <div class="w-full ml-2">
-                        <label for="presentacion" class="block text-sm font-medium text-gray-700 mb-2">
+                        <label for="tipo_presentacion" class="block text-sm font-medium text-gray-700 mb-2">
                             Presentación
                         </label>
                         <select 
                             id="opcion"
-                            wire:model="presentacion"
+                            wire:model="tipo_presentacion"
                             class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 bg-white appearance-none"
                         >
                             <option value="" selected>Seleccione una opción</option>
-                            <option value="Unidad">Unidad</option>
-                            <option value="Al mayor">Al mayor</option>
-                            <option value="Kg">Kg</option>
-                  
+                                <option value="Unidad">Unidad</option>
+                                <option value="Caja">Caja</option>
+                                <option value="Kg">Kg</option>
                         </select>
-                        @error('presentacion')
+                        @error('tipo_presentacion')
                             <p class="text-red-500 text-sm mt-1">{{ $message }}</p>
                         @enderror
                     </div>
 
                 </div>
 
-                <div class=" flex justify-start p-4">
-                    <div class="w-1/3 mr-3">
-                        <div>
-                            <label for="precio_venta" class="block text-sm font-medium text-gray-700 mb-2">
-                                Precio de venta
-                            </label>
+                <div class="  justify-start p-4">
+    
 
-                            <div class="flex">
-
-                                <input 
-                                type="number" 
-                                id="precio_venta"
-                                wire:model="precio_venta"
-                                class="w-full px-4 mr-1 py-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 bg-white placeholder-gray-400"
-                                placeholder="Precio en dólares"
+                    @if($tipo_presentacion === 'Caja')
+                        <div class="flex p-4">
+                            <div class="w-1/3 mr-3">
+                                <label class="block text-sm font-medium text-gray-700 mb-2">
+                                    Unidades por caja
+                                </label>
+                                <input
+                                    type="number"
+                                    wire:model="unidades_por_caja"
+                                    class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 bg-white placeholder-gray-400"
+                                    placeholder="Ejemplo: 24"
                                 >
-
-                                <p class="text-xl font-medium text-gray-700 ml-1 mt-2">$</p>
-
+                                @error('unidades_por_caja')
+                                    <p class="text-red-500 text-sm mt-1">{{ $message }}</p>
+                                @enderror
                             </div>
-                            
-                            @error('precio_venta')
-                                <p class="text-red-500 text-sm mt-1">{{ $message }}</p>
-                            @enderror
+
+                            <div class="w-1/3 mr-3">
+                                <label class="block text-sm font-medium text-gray-700 mb-2">
+                                    Precio por unidad ($)
+                                </label>
+                                <input
+                                    type="number"
+                                    step="0.01"
+                                    wire:model.defer="precio_unidad"
+                                    class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 bg-white placeholder-gray-400"
+                                    placeholder="Ejemplo: 1.00"
+                                >
+                                @error('precio_unidad')
+                                    <p class="text-red-500 text-sm mt-1">{{ $message }}</p>
+                                @enderror
+                            </div>
+
+                           <div class="w-1/3">
+                                <label class="block text-sm font-medium text-gray-700 mb-2">
+                                    Precio por caja ($)
+                                </label>
+                                <input
+                                    type="number"
+                                    wire:model.defer="precio_caja"
+                                    class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 bg-white placeholder-gray-400"
+                                    placeholder="Ejemplo: 22.00"
+                                >
+                                @error('precio_caja')
+                                    <p class="text-red-500 text-sm mt-1">{{ $message }}</p>
+                                @enderror
+                            </div> 
                         </div>
-                    </div>
 
-                    {{-- <div class="w-1/3 mr-1">
+                        <div class="flex p-4">
+                            <div class="w-1/3 mr-3">
+                                <label class="block text-sm font-medium text-gray-700 mb-2">
+                                    Cantidad de cajas (stock inicial)
+                                </label>
+                                <input
+                                    type="number"
+                                    wire:model="cantidad_cajas"
+                                    class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 bg-white placeholder-gray-400"
+                                    placeholder="Ejemplo: 50"
+                                >
+                                @error('cantidad_cajas')
+                                    <p class="text-red-500 text-sm mt-1">{{ $message }}</p>
+                                @enderror 
+                            </div>
 
-                        <label for="vencimiento" class="block text-sm font-medium text-gray-700 mb-2 ">
-                            Posee fecha de vencimiento?
-                        </label>
+                           
 
-                     
+                             <div class="w-2/3 flex items-end pl-4 text-sm text-gray-600">
+                                Stock total en unidades:
+                                <span class="font-bold ml-2 text-gray-800">
 
-                            <select 
-                                id="vencimiento"
-                                wire:model="vencimiento"
-                                class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 bg-white appearance-none"
-                            >
-                                <option value="" selected>Seleccione una opción</option>
-                                <option value="Si">Si</option>
-                                <option value="No">No</option>
-                        
-                            </select>
+                                    {{$this->cantunidades()}}
 
-                            @error('vencimiento')
-                                <p class="text-red-500 text-sm mt-1">{{ $message }}</p>
-                            @enderror
-                    </div> --}}
+                                  
+          
+                                </span>
+                            </div> 
+
+                          
+                        </div>
+
+                    @else
+                        <div class="flex p-4">
+                            <div class="w-1/3 mr-3">
+                                <label class="block text-sm font-medium text-gray-700 mb-2">
+                                    Precio de venta ($)
+                                </label>
+                                <input
+                                    type="number"
+                                    step="0.01"
+                                    wire:model="precio_venta"
+                                    class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 bg-white placeholder-gray-400"
+                                    placeholder="Precio en dólares"
+                                >
+                                @error('precio_venta')
+                                    <p class="text-red-500 text-sm mt-1">{{ $message }}</p>
+                                @enderror
+                            </div>
+
+                            <div class="w-1/3">
+                                <label class="block text-sm font-medium text-gray-700 mb-2">
+                                    Stock inicial
+                                </label>
+                                <input
+                                    type="number"
+                                    step="0.001"
+                                    wire:model.defer="stock_inicial"
+                                    class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 bg-white placeholder-gray-400"
+                                    placeholder="Ejemplo: 100"
+                                >
+                                @error('stock_inicial')
+                                    <p class="text-red-500 text-sm mt-1">{{ $message }}</p>
+                                @enderror
+                            </div>
+                        </div>
+
+                    @endif
+
+
+
+                  
 
 
 
@@ -345,26 +418,7 @@
                         </div>
                     </div>
 
-                    @if($tipo == 'editar')
-                        <div class="w-1/3 ml-2">
-                            <div>
-                                <label for="cantidad" class="block text-sm font-medium text-gray-700 mb-2">
-                                    Cantidad
-                                </label>
-                                <input 
-                                    type="text" 
-                                    id="cantidad"
-                                    wire:model.defer="cantidad"
-                                    class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 bg-white placeholder-gray-400"
-                                    placeholder="Ejemplo. 250"
-                                >
-                                @error('cantidad')
-                                    <p class="text-red-500 text-sm mt-1">{{ $message }}</p>
-                                @enderror
-                            </div>
-                        </div>
-
-                    @endif
+     
 
 
                 </div>
@@ -385,7 +439,7 @@
                  class="bg-blue-600 cursor-pointer hover:bg-blue-700 text-white font-medium py-2 px-6 rounded-lg flex items-center transition duration-200 transform hover:-translate-y-0.5 shadow-md hover:shadow-lg">
                 
        
-                        <span wire:loading>Procesando...</span>
+                        {{-- <span wire:loading>Procesando...</span> --}}
                  Guardar
             </button>
 

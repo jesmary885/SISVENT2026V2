@@ -90,8 +90,8 @@
                         <tr>
                             <th class="px-6 py-4 text-left font-semibold text-gray-700">Producto</th>
                             <th class="px-6 py-4 text-center font-semibold text-gray-700">Stock</th>
-                            <th class="px-6 py-4 text-center font-semibold text-gray-700">Código</th>
-                            <th class="px-6 py-4 text-center font-semibold text-gray-700">Marca</th>
+                            <th class="px-6 py-4 text-center font-semibold text-gray-700 hidden md:table-cell">Código</th>
+                            <th class="px-6 py-4 text-center font-semibold text-gray-700 hidden md:table-cell">Marca</th>
                             <th class="px-6 py-4 text-center font-semibold text-gray-700">Precio</th>
                             @can('Administrador')
                             <th class="px-6 py-4 text-center font-semibold text-gray-700">Acciones</th>
@@ -104,11 +104,11 @@
                             <!-- Producto -->
                             <td class="px-6 py-4">
                                 <div class="flex items-center">
-                                    <div class="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center mr-4">
+                                    <div class="w-12 h-12 bg-gradient-to-br flex-shrink-0  from-blue-500 to-purple-600 rounded-lg flex items-center justify-center mr-4">
                                         <i class="fas fa-box text-white"></i>
                                     </div>
-                                    <div>
-                                        <p class="font-semibold text-gray-800 group-hover:text-blue-600">{{ $registro->nombre }}</p>
+                                    <div class="min-w-0">
+                                        <p class="font-semibold text-gray-800 group-hover:text-blue-600 truncate">{{ $registro->nombre }}</p>
                                         <p class="text-sm text-gray-500">ID: {{ $registro->id }}</p>
                                     </div>
                                 </div>
@@ -116,37 +116,95 @@
                             
                             <!-- Stock -->
                             <td class="px-6 py-4 text-center">
-                                <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-bold 
+                                <span class="inline-flex items-center px-3 py-1 rounded-md text-sm font-bold 
                                     {{ $registro->cantidad > 20 ? 'bg-green-100 text-green-800' : 
                                        ($registro->cantidad > 5 ? 'bg-yellow-100 text-yellow-800' : 'bg-red-100 text-red-800') }}">
-                                    <i class="fas fa-cubes mr-2"></i>
-                                    {{ $registro->cantidad }} unidades
+                                    <i class=" fas fa-cubes mr-2"></i>
+
+                                    @if($this->verificar($registro) == 'kg')
+
+                                    {{ rtrim(rtrim($registro->stock_base, '0'), '.') }} Kg
+
+                                    @endif
+
+                                    @if($this->verificar($registro) == 'unidades')
+
+                                    {{ rtrim(rtrim($registro->stock_base, '0'), '.') }} unid
+
+                                    @endif
+
+
+                                    @if($this->verificar($registro) == 'caja')
+
+                                    {{ rtrim(rtrim($registro->stock_base, '0'), '.') }} unid
+                                    ({{ rtrim(rtrim($this->cantcajas($registro), '0'), '.') }} cajas)
+
+
+                                    @endif
+
+
                                 </span>
                             </td>
                             
                             <!-- Código -->
-                            <td class="px-6 py-4 text-center">
+                            <td class="px-6 py-4 text-center hidden md:table-cell">
                                 <code class="bg-gray-100 text-gray-800 px-3 py-1 rounded-lg font-mono text-sm">
                                     {{ $registro->cod_barra }}
                                 </code>
                             </td>
                             
                             <!-- Marca -->
-                            <td class="px-6 py-4 text-center">
+                            <td class="px-6 py-4 text-center hidden md:table-cell">
                                 <span class="bg-blue-100 text-blue-800 px-3 py-1 rounded-lg font-medium">
                                     {{ $registro->marca->nombre }}
                                 </span>
                             </td>
                             
                             <!-- Precio -->
-                            <td class="px-6 py-4 text-center">
-                                <p class="bg-gradient-to-r from-green-500 to-emerald-600 text-white px-3 py-2 rounded-lg font-bold text-sm">
-                                    Bs {{$this->total_venta_bs($registro->precio_venta)}}
-                                    <span class="bg-green-200 text-green-800 text-xs font-medium px-2 rounded-sm dark:bg-gray-700 dark:text-green-400 border border-green-400"> 
-                                        ${{ number_format($registro->precio_venta, 2) }}
-                                    </span>
-                                </p>
-                            </td>
+                            <td class="px-3 py-3 text-center">
+
+                                <div class="text-xs font-semibold text-green-700  rounded-md px-2 py-1">
+
+                                @if($this->verificar($registro) == 'unidades')
+
+                             
+                                  
+                                        {{-- Bs {{$this->total_venta_bs($registro,'unidades')}} --}}
+                                        <span class="bg-green-200 text-green-800 text-xs md:text-sm font-medium px-2 rounded-sm dark:bg-gray-700 dark:text-green-400 border border-green-400 block "> 
+                                             Bs {{$this->precio_present($registro,'unidades')['bs_uni']}} <span class="bg-yellow-300 text-yellow-800 text-xs font-medium px-2 rounded-sm dark:bg-gray-700 dark:text-yellow-400 border border-yellow-400">REF  {{ $this->precio_present($registro,'unidades')['precio_uni'] }}</span> 
+                                        </span>
+                              
+
+                                @endif
+
+                                @if($this->verificar($registro) == 'caja')
+
+                                    
+                                  
+                                        {{-- Bs {{$this->total_venta_bs($registro,'unidades')}} --}}
+                                        <span class="bg-green-200 text-green-800 text-xs md:text-sm font-medium px-2 rounded-sm dark:bg-gray-700 dark:text-green-400 border border-green-400 block "> 
+                                            Unid: Bs {{$this->precio_present($registro,'caja')['bs_unidad']}} <span class="bg-yellow-300 text-yellow-800 text-xs font-medium px-2 rounded-sm dark:bg-gray-700 dark:text-yellow-400 border border-yellow-400">REF  {{ $this->precio_present($registro,'caja')['unidad'] }}</span> 
+                                        </span>
+                                        <span class="bg-green-200 text-green-800 text-xs md:text-sm font-medium px-2 mt-1 rounded-sm dark:bg-gray-700 dark:text-green-400 border border-green-400 block"> 
+                                            Caja: Bs {{$this->precio_present($registro,'caja')['bs_caja'] }} <span class="bg-yellow-300 text-yellow-800 text-xs font-medium px-2 rounded-sm dark:bg-gray-700 dark:text-yellow-400 border border-yellow-400"> REF  {{ $this->precio_present($registro,'caja')['caja']}}</span> 
+                                        </span>
+                                    
+                                @endif
+                                
+
+                                @if($this->verificar($registro) == 'kg')
+
+                           
+                                  
+                                        {{-- Bs {{$this->total_venta_bs($registro,'unidades')}} --}}
+                                        <span class="bg-green-200 text-green-800 text-xs md:text-sm font-medium px-2 rounded-sm dark:bg-gray-700 dark:text-green-400 border border-green-400 block "> 
+                                             Bs {{$this->precio_present($registro,'kg')['bs_kg']}} <span class="bg-yellow-300 text-yellow-800 text-xs font-medium px-2 rounded-sm dark:bg-gray-700 dark:text-yellow-400 border border-yellow-400">REF  {{ $this->precio_present($registro,'kg')['precio_kg'] }}</span> 
+                                        </span>
+                               
+                                @endif
+
+
+                             </td>
                             
                             <!-- Acciones -->
 

@@ -16,7 +16,11 @@ class ProductoVenta extends Model
         return $this->belongsTo(Venta::class);
     }
 
-    public function producto(){
-        return $this->belongsTo(Producto::class);
+    public function producto_presentacion(){
+        return $this->belongsTo(ProductoPresentaciones::class);
+    }
+
+    public function presentacion_productos(){
+        return $this->hasMany(ProductoPresentaciones::class);
     }
 }

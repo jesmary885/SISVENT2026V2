@@ -42,23 +42,24 @@ class Home extends Component
         $finMes = Carbon::now()->endOfMonth();
         
         return ProductoVenta::select(
-                'producto_id',
+                'producto_presentacion_id',
                 DB::raw('SUM(cantidad) as total_vendido'),
                 DB::raw('SUM(cantidad * precio_dolares) as total_ingresos')
             )
             ->whereBetween('created_at', [$inicioMes, $finMes])
-            ->with(['producto:id,nombre,precio_venta'])
-            ->groupBy('producto_id')
+            ->with(['producto_presentacion:id,producto_id,precio_usd',
+            'producto_presentacion.producto:id,nombre'])
+            ->groupBy('producto_presentacion_id')
             ->orderByDesc('total_vendido')
             ->limit(8)
             ->get()
             ->map(function($item) {
                 return [
-                    'id' => $item->producto->id,
-                    'nombre' => $item->producto->nombre,
+                    'id' => $item->producto_presentacion->id,
+                    'nombre' => $item->producto_presentacion->producto->nombre,
                     'total_vendido' => $item->total_vendido,
                     'total_ingresos' => $item->total_ingresos,
-                    'precio_venta' => $item->producto->precio_dolares,
+                    'precio_venta' => $item->producto_presentacion->producto->precio_usd,
                  
                 ];
             });

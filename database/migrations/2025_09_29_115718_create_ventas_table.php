@@ -16,31 +16,31 @@ return new class extends Migration
         Schema::create('ventas', function (Blueprint $table) {
             $table->id();
           
-            $table->float('descuento')->nullable();
-            $table->float('subtotal_dolares')->nullable();
-            $table->float('subtotal_bolivares')->nullable();
+            $table->decimal('descuento', 15, 2)->nullable();
+            $table->decimal('subtotal_dolares', 15, 2)->nullable();
+            $table->decimal('subtotal_bolivares', 15, 2)->nullable();
 
-            $table->float('total_dolares');
-            $table->float('total_bolivares');
+            $table->decimal('total_dolares', 15, 2);
+            $table->decimal('total_bolivares', 15, 2);
             
-            $table->float('impuesto')->nullable();
-            $table->float('exento')->nullable();
+            $table->decimal('impuesto', 15, 2)->nullable();
+            $table->decimal('exento', 15, 2)->nullable();
 
              $table->longText('comentario')->nullable();
 
-            $table->float('total_pagado_cliente')->nullable();
+            $table->decimal('total_pagado_cliente', 15, 2)->nullable();
            // $table->float('deuda_cliente')->nullable();
 
-           $table->float('monto_pagado_dolares')->nullable();
-           $table->float('monto_pagado_bolivares')->nullable();
+           $table->decimal('monto_pagado_dolares', 15, 2)->nullable();
+           $table->decimal('monto_pagado_bolivares', 15, 2)->nullable();
 
-           $table->float('deuda_dolares')->nullable();
-           $table->float('deuda_bolivares')->nullable();
+           $table->decimal('deuda_dolares', 15, 2)->nullable();
+           $table->decimal('deuda_bolivares', 15, 2)->nullable();
            $table->string('tipo_comprobante')->nullable();
            $table->string('estado_pago')->nullable();
 
             $table->string('estado')->nullable();
-            $table->float('vuelto')->nullable();      
+            $table->decimal('vuelto', 15, 2)->nullable();      
 
             $table->string('metodo_pago');
              $table->string('metodo_pago_vuelto')->nullable();

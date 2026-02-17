@@ -57,6 +57,15 @@
         </button>
     </div>
 
+
+
+
+
+
+
+
+    
+
     <!-- Indicadores de estado -->
     <div class="mt-1 text-xs">
         @if($esperando_venta)

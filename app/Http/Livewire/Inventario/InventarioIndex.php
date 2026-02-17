@@ -5,6 +5,7 @@ namespace App\Http\Livewire\Inventario;
 use App\Models\Compra;
 use App\Models\Producto;
 use App\Models\ProductoLote;
+use App\Models\ProductoPresentaciones;
 use App\Models\ProductoVenta;
 use Livewire\WithPagination;
 use App\Models\Tasa;
@@ -19,7 +20,36 @@ class InventarioIndex extends Component
 
     public $search,$product_delete;
 
-    protected $listeners = ['render','confirmacion' => 'confirmacion'];
+    protected $listeners = ['confirmacion' => 'confirmacion', 'refreshComponent' => '$refresh'];
+
+    public function verificar($r){
+
+        $presentaciones = ProductoPresentaciones::where('producto_id',$r->id)->get();
+
+        $caja = 0;
+        $unidades = 0;
+        
+        foreach($presentaciones as $presentacion){
+
+            if($presentacion->nombre == 'caja') $caja++;
+            if($presentacion->nombre == 'unidad') $unidades++;
+             if($presentacion->nombre == 'kg') return 'kg';
+        }
+
+        if($caja==1 && $unidades==1) return 'caja';
+        if($caja==0 && $unidades=1) return 'unidades';
+    }
+
+    public function cantcajas($r){
+
+        $presentaciones = ProductoPresentaciones::where('producto_id',$r->id)->get();
+
+        foreach($presentaciones as $presentacion){
+
+            if($presentacion->nombre == 'caja') return $presentacion->cantidad_de_cajas;
+        }
+
+    }
 
     public function render()
     {
@@ -40,9 +70,67 @@ class InventarioIndex extends Component
     public function total_venta_bs($precio){
 
         $precio_bs = $precio * Tasa::find(1)->tasa_actual;
-
         return number_format($precio_bs, 2, '.', '');
 
+    }
+
+     public function precio_present($registro,$factor){
+
+        if($factor == 'unidades'){
+
+            $present = ProductoPresentaciones::where('producto_id',$registro->id)->where('nombre','unidad')->first();
+
+            $precio_bs_unidad = $present->precio_usd * Tasa::find(1)->tasa_actual;
+
+            return [
+                'precio_uni' => number_format($present->precio_usd, 2, '.', ''),
+                'bs_uni' => number_format($precio_bs_unidad, 2, '.', ''),
+            ];
+
+        }
+
+         if($factor == 'caja'){
+
+       
+            $present_unidades = ProductoPresentaciones::where('producto_id',$registro->id)->where('nombre','unidad')->first();
+            $present_cajas = ProductoPresentaciones::where('producto_id',$registro->id)->where('nombre','caja')->first();
+
+            $precio_bs_unidad = $present_unidades->precio_usd * Tasa::find(1)->tasa_actual;
+
+            $precio_bs_caja = $present_cajas->precio_usd * Tasa::find(1)->tasa_actual;
+
+
+
+            return [
+                'unidad' => number_format($present_unidades->precio_usd, 2, '.', ''),
+                'caja'   => number_format($present_cajas->precio_usd, 2, '.', ''),
+                'bs_unidad' => number_format($precio_bs_unidad, 2, '.', ''),
+                'bs_caja' => number_format($precio_bs_caja, 2, '.', ''),
+
+            ];
+
+            //return 'Unidades:'. number_format($present_unidades->precio_usd, 2, '.', '').'$'. 'Cajas:'. number_format($present_cajas->precio_usd, 2, '.', '').'$';
+        }
+
+        if($factor == 'kg'){
+
+            $present = ProductoPresentaciones::where('producto_id',$registro->id)->where('nombre','kg')->first();
+
+            $precio_bs_kg = $present->precio_usd * Tasa::find(1)->tasa_actual;
+
+            return [
+                'precio_kg' => number_format($present->precio_usd, 2, '.', ''),
+                'bs_kg' => number_format($precio_bs_kg, 2, '.', ''),
+            ];
+
+        }
+
+
+
+
+    }
+
+    public function preciodol(){
 
     }
 
@@ -56,6 +144,13 @@ class InventarioIndex extends Component
     }
 
     public function confirmacion(){
+
+        $delete_presentacion=ProductoPresentaciones::where('producto_id',$this->product_delete)->get();
+
+        foreach($delete_presentacion as $dp){
+            $dp->delete();
+        }
+
         $prod_destroy = Producto::where('id',$this->product_delete)->first();
         $prod_destroy->delete();
 
@@ -64,7 +159,6 @@ class InventarioIndex extends Component
         foreach($product_delete_lotes as $pl){
             $pl->delete();
         }
-
 
         $product_delete_compras = Compra::where('producto_id',$this->product_delete)->get();
 

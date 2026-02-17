@@ -19,14 +19,14 @@ return new class extends Migration
             $table->integer('cantidad');
 
             $table->string('metodo_pago');
-        
-            $table->float('precio_compra_dolares')->nullable();
-            $table->float('precio_compra_bolivares')->nullable();
-            $table->float('total_pagado_dolares')->nullable();
-            $table->float('total_pagado_bolivares')->nullable();
-                      
-        //    $table->float('deuda_a_proveedor')->default(0);
 
+            $table->string('moneda_compra');
+
+            $table->decimal('total_original', 15, 2)->nullable();
+        
+            $table->float('tasa_cambio_compra')->nullable();
+            $table->decimal('total_usd_equivalente', 15, 2)->nullable();
+            $table->decimal('precio_unitario', 15, 2)->nullable();
 
             $table->unsignedBigInteger('proveedor_id');
             $table->foreign('proveedor_id')->references('id')->on('proveedors');

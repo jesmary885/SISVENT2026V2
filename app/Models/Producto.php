@@ -16,6 +16,7 @@ class Producto extends Model
     }
 
 
+
     public function compras(){
         return $this->hasMany(Compra::class);
     }
@@ -24,7 +25,13 @@ class Producto extends Model
         return $this->hasMany(CarroCompra::class);
     }
 
+    public function presentacion_productos(){
+        return $this->hasMany(ProductoPresentaciones::class);
+    }
+
     public function marca(){
         return $this->belongsTo(Marca::class);
     }
+
+    
 }

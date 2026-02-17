@@ -100,7 +100,7 @@
 
 
         <button type="button" wire:click="$set('open',true)" wire:loading.attr="disabled"
-                    class="bg-green-600 hover:bg-green-700 cursor-pointer p-4 text-white font-bold text-lg rounded-xl transition duration-200 flex items-center space-x-2">
+                    class="bg-green-600 hover:bg-green-700 w-full cursor-pointer p-4 text-white font-bold text-lg rounded-xl transition duration-200 flex items-center space-x-2 justify-center">
                 <i class="fas fa-file-pdf"></i>
                 <span wire:loading.remove>Exportar / Importar</span>
                 <span wire:loading>

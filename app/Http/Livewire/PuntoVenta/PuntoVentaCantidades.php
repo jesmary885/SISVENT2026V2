@@ -139,7 +139,7 @@ class PuntoVentaCantidades extends Component
     {
         try {
             // Buscar si el producto ya está en el carrito de esta venta
-            $busqueda = CarroCompra::where('producto_id', $this->registro->id)
+            $busqueda = CarroCompra::where('producto_presentacion_id', $this->registro->id)
                 ->where('user_id', $this->user_id)
                 ->where('venta_id', $this->venta_activa_id)
                 ->where('estado', 'abierta')
@@ -166,7 +166,7 @@ class PuntoVentaCantidades extends Component
             } else {
                 // Crear nuevo item en el carrito
                 $producto_venta = new CarroCompra();
-                $producto_venta->producto_id = $this->registro->id;
+                $producto_venta->producto_presentacion_id = $this->registro->id;
                 $producto_venta->cantidad = $this->qty;
                 $producto_venta->user_id = $this->user_id;
                 $producto_venta->venta_id = $this->venta_activa_id;
@@ -175,6 +175,8 @@ class PuntoVentaCantidades extends Component
                 
                 $mensaje = "✅ {$this->registro->nombre} agregado al carrito";
             }
+
+            discount($this->registro,$this->qty);
 
             $this->reset('qty');
             
@@ -210,7 +212,7 @@ class PuntoVentaCantidades extends Component
     }
 
     public function render()
-    {
+    {  
         $this->obtenerVentaActiva();
         
         return view('livewire.punto-venta.punto-venta-cantidades');
