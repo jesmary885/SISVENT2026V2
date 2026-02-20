@@ -2,6 +2,7 @@
 
 use App\Models\CarroCompra;
 use App\Models\Producto;
+use Illuminate\Support\Facades\DB;
 use App\Models\ProductoPresentaciones;
 
  function quantity($registro){
@@ -52,73 +53,115 @@ function qty_available($registro){
 }
 
 
-function discount($item,$cant){
+function discount($item, $cant)
+{
+    $presentacion = ProductoPresentaciones::find($item->id);
 
-    // $producto = Producto::find($item->id);
+    $producto = Producto::find($presentacion->producto_id);
 
-       $busqueda_compra = ProductoPresentaciones::where('id',$item->id)->first();
+    /*
+    |--------------------------------------------------------------------------
+    | 1️⃣ DESCONTAR EN BASE A PRESENTACIÓN
+    |--------------------------------------------------------------------------
+    */
 
-            if($busqueda_compra->nombre == 'unidad' || $busqueda_compra->nombre == 'kg'){
+    if ($presentacion->nombre === 'unidad' || $presentacion->nombre === 'kg') {
 
-                $producto = Producto::where('id', $busqueda_compra->producto_id)->first();
-                $cantidad_new = $producto->stock_base - $cant;
+        // descuento directo en unidades
+        $producto->stock_base -= $cant;
 
-                $producto->update([
-                    'stock_base' => $cantidad_new
-                ]);
+    } else {
 
-            }else{
+        // descuento en cajas
+        $unidadesADescontar = $presentacion->factor_base * $cant;
+        $producto->stock_base -= $unidadesADescontar;
+    }
 
-                $cantidad_new_caja = $busqueda_compra->cantidad_de_cajas - $cant;
+    // evitar negativos
+    if ($producto->stock_base < 0) {
+        $producto->stock_base = 0;
+    }
 
-                $busqueda_compra->update([
-                    'cantidad_de_cajas' => $cantidad_new_caja
-                ]);
+    $producto->save();
 
-                $cantidad_total_unidad = $busqueda_compra->factor_base * $cant;
+    /*
+    |--------------------------------------------------------------------------
+    | 2️⃣ RECALCULAR CAJAS AUTOMÁTICAMENTE
+    |--------------------------------------------------------------------------
+    */
 
-                $producto = Producto::where('id', $busqueda_compra->producto_id)->first();
-                $cantidad_new = $producto->stock_base - $cantidad_total_unidad;
+    $presentacionCaja = ProductoPresentaciones::where('producto_id', $producto->id)
+        ->where('nombre', 'caja')
+        ->first();
 
-                $producto->update([
-                    'stock_base' => $cantidad_new
-                ]);
+    if ($presentacionCaja) {
 
-            }
+        $factor = $presentacionCaja->factor_base;
+
+        $cajasCompletas = floor($producto->stock_base / $factor);
+
+        $presentacionCaja->update([
+            'cantidad_de_cajas' => $cajasCompletas
+        ]);
+    }
 }
 
-function increase($item,$cant){
 
-     $busqueda_compra = ProductoPresentaciones::where('id',$item)->first();
 
-            if($busqueda_compra->nombre == 'unidad' || $busqueda_compra->nombre == 'kg'){
 
-                $producto = Producto::where('id', $busqueda_compra->producto_id)->first();
-                $cantidad_new = $producto->stock_base + $cant;
 
-                $producto->update([
-                    'stock_base' => $cantidad_new
-                ]);
+function increase($presentacionId, $cant)
+{
+    DB::transaction(function () use ($presentacionId, $cant) {
 
-            }else{
+        $presentacion = ProductoPresentaciones::findOrFail($presentacionId);
 
-                $cantidad_new_caja = $busqueda_compra->cantidad_de_cajas + $cant;
+        $producto = Producto::findOrFail($presentacion->producto_id);
 
-                $busqueda_compra->update([
-                    'cantidad_de_cajas' => $cantidad_new_caja
-                ]);
+        /*
+        |--------------------------------------------------------------------------
+        | 1️⃣ CALCULAR UNIDADES A SUMAR
+        |--------------------------------------------------------------------------
+        */
 
-                $cantidad_total_unidad = $busqueda_compra->factor_base * $cant;
+        if ($presentacion->nombre === 'unidad' || $presentacion->nombre === 'kg') {
 
-                $producto = Producto::where('id', $busqueda_compra->producto_id)->first();
-                $cantidad_new = $producto->stock_base + $cantidad_total_unidad;
+            $unidadesASumar = $cant;
 
-                $producto->update([
-                    'stock_base' => $cantidad_new
-                ]);
+        } else {
 
-            }
+            $unidadesASumar = $presentacion->factor_base * $cant;
+        }
 
-    
+        /*
+        |--------------------------------------------------------------------------
+        | 2️⃣ SUMAR A STOCK BASE
+        |--------------------------------------------------------------------------
+        */
 
+        $producto->stock_base += $unidadesASumar;
+        $producto->save();
+
+        /*
+        |--------------------------------------------------------------------------
+        | 3️⃣ RECALCULAR CAJAS
+        |--------------------------------------------------------------------------
+        */
+
+        $presentacionCaja = ProductoPresentaciones::where('producto_id', $producto->id)
+            ->where('nombre', 'caja')
+            ->first();
+
+        if ($presentacionCaja) {
+
+            $factor = $presentacionCaja->factor_base;
+
+            $cajasCompletas = floor($producto->stock_base / $factor);
+
+            $presentacionCaja->update([
+                'cantidad_de_cajas' => $cajasCompletas
+            ]);
+        }
+
+    });
 }

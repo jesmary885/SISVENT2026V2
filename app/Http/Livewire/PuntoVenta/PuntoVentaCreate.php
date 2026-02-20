@@ -893,10 +893,10 @@ class PuntoVentaCreate extends Component
         return $this->calcularTotales();
     }
 
-    public function delete($product)
+    public function delete($product,$cant)
     {
 
-        increase($product['producto_presentacion_id'],'1');
+        increase($product['producto_presentacion_id'],$cant);
 
         $prod_destroy = CarroCompra::where('id', $product['id'])->first();
         if($prod_destroy) {

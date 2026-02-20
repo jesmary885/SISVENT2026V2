@@ -22,7 +22,7 @@ class ProductosImport implements ToCollection, WithHeadingRow, SkipsEmptyRows
     protected $created = 0;
     protected $updated = 0;
 
-    public function model(array $row)
+   /* public function model(array $row)
     {
         // 🔥 Ignorar fila completamente vacía
         if (collect($row)->filter()->isEmpty()) {
@@ -40,9 +40,9 @@ class ProductosImport implements ToCollection, WithHeadingRow, SkipsEmptyRows
             'marca' => $row['marca'] ?? null,
             'stock_minimo' => $row['stock_minimo'] ?? 0,
         ]);
-    }
+    }*/
     
-    public function collection(Collection $rows)
+   public function collection(Collection $rows)
     {
         $rowNumber = 2;
 
@@ -52,7 +52,7 @@ class ProductosImport implements ToCollection, WithHeadingRow, SkipsEmptyRows
 
                 $data = [
                     'nombre' => trim($row['nombre'] ?? ''),
-                    'cod_barra' => $row['codigo_de_barras'] ?? null,
+                    'cod_barra' => trim($row['codigo_de_barras'] ?? ''),
                     'marca_id' => $this->getMarcaId($row['marca'] ?? null),
                     'stock_minimo' => intval($row['stock_minimo'] ?? 0),
                     'exento' => in_array($row['exento'] ?? 'Si', ['Si','No']) ? $row['exento'] : 'Si',
@@ -78,38 +78,34 @@ class ProductosImport implements ToCollection, WithHeadingRow, SkipsEmptyRows
 
                 DB::transaction(function () use ($data) {
 
-                    // 🧮 calcular stock_base
-                    if ($data['presentacion'] == 'unidad') {
-                        $stockBase = $data['cantidad'];
-                    } else {
-                        $stockBase = $data['cantidad'] * $data['factor'];
+                    /*
+                    |--------------------------------------------------------------------------
+                    | 1️⃣ BUSCAR PRODUCTO
+                    |--------------------------------------------------------------------------
+                    */
+
+                    $producto = null;
+
+                    if (!empty($data['cod_barra'])) {
+                        $producto = Producto::where('cod_barra', $data['cod_barra'])->first();
                     }
 
-                    $producto = Producto::where('cod_barra', $data['cod_barra'])
-                        ->orWhere('nombre', $data['nombre'])
-                        ->first();
+                    if (!$producto) {
+                        $producto = Producto::where('nombre', $data['nombre'])->first();
+                    }
 
-                    if ($producto) {
+                    /*
+                    |--------------------------------------------------------------------------
+                    | 2️⃣ CREAR O ACTUALIZAR PRODUCTO
+                    |--------------------------------------------------------------------------
+                    */
 
-                        $producto->update([
-                            'nombre' => $data['nombre'],
-                            'cod_barra' => $data['cod_barra'],
-                            'stock_base' => $stockBase,
-                            'unidad_base' => 'unidad',
-                            'stock_minimo' => $data['stock_minimo'],
-                            'exento' => $data['exento'],
-                            'estado' => $data['estado'],
-                            'marca_id' => $data['marca_id'],
-                        ]);
-
-                        $this->updated++;
-
-                    } else {
+                    if (!$producto) {
 
                         $producto = Producto::create([
                             'nombre' => $data['nombre'],
-                            'cod_barra' => $data['cod_barra'],
-                            'stock_base' => $stockBase,
+                            'cod_barra' => $data['cod_barra'] ?: null,
+                            'stock_base' => 0, // Se actualizará luego si es unidad
                             'unidad_base' => 'unidad',
                             'stock_minimo' => $data['stock_minimo'],
                             'exento' => $data['exento'],
@@ -118,21 +114,53 @@ class ProductosImport implements ToCollection, WithHeadingRow, SkipsEmptyRows
                         ]);
 
                         $this->created++;
+
+                    } else {
+
+                        $producto->update([
+                            'nombre' => $data['nombre'],
+                            'cod_barra' => $data['cod_barra'] ?: null,
+                            'stock_minimo' => $data['stock_minimo'],
+                            'exento' => $data['exento'],
+                            'estado' => $data['estado'],
+                            'marca_id' => $data['marca_id'],
+                        ]);
+
+                        $this->updated++;
                     }
+
+                    /*
+                    |--------------------------------------------------------------------------
+                    | 3️⃣ ACTUALIZAR STOCK BASE SOLO SI ES UNIDAD
+                    |--------------------------------------------------------------------------
+                    */
+
+                    if ($data['presentacion'] === 'unidad') {
+
+                        $producto->update([
+                            'stock_base' => $data['cantidad']
+                        ]);
+                    }
+
+                    /*
+                    |--------------------------------------------------------------------------
+                    | 4️⃣ CREAR O ACTUALIZAR PRESENTACIÓN
+                    |--------------------------------------------------------------------------
+                    */
 
                     ProductoPresentaciones::updateOrCreate(
                         [
                             'producto_id' => $producto->id,
-                            'nombre' => $data['presentacion'], // SOLO unidad o caja
+                            'nombre' => $data['presentacion'],
                         ],
                         [
                             'factor_base' => $data['factor'],
                             'precio_usd' => $data['precio'],
                             'activo' => true,
                             'cantidad_de_cajas' =>
-                                $data['presentacion'] == 'caja'
-                                ? $data['cantidad']
-                                : null
+                                $data['presentacion'] === 'caja'
+                                    ? $data['cantidad']
+                                    : null
                         ]
                     );
 
@@ -140,12 +168,14 @@ class ProductosImport implements ToCollection, WithHeadingRow, SkipsEmptyRows
                 });
 
             } catch (\Exception $e) {
+
                 $this->addError($rowNumber, [$e->getMessage()], $row);
             }
 
             $rowNumber++;
         }
     }
+
 
     private function getMarcaId($marcaNombre)
     {

@@ -584,7 +584,7 @@
                                             <div class="w-8 h-8 bg-blue-500 rounded-lg flex items-center justify-center mr-3">
                                                 <i class="fas fa-box text-white text-xs"></i>
                                             </div>
-                                            <span class="font-medium text-gray-800 text-sm">{{$registro_c->producto_presentacion->producto->nombre}}</span>
+                                            <span class="font-medium text-gray-800 text-sm">{{$registro_c->producto_presentacion->producto->nombre}}({{$registro_c->producto_presentacion->nombre}})</span>
                                         </div>
                                     </td>
                                     <td class="px-4 py-3 text-center">
@@ -602,7 +602,7 @@
                                     </td>
                                     <td class="px-4 py-3 text-center">
                                         <button
-                                            wire:click="delete({{$registro_c}})"
+                                            wire:click="delete({{$registro_c}},{{$registro_c->cantidad}})"
                                             wire:loading.class="opacity-50"
                                             class="w-10 h-10 bg-red-500 hover:bg-red-600 text-white rounded-xl flex items-center justify-center transition-all duration-300 transform hover:scale-110 group-hover:shadow-lg"
                                             title="Eliminar del carrito"

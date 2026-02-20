@@ -136,7 +136,7 @@ class InventarioIndex extends Component
 
      public function delete($productoId){
         $this->product_delete = $productoId;
-        $busqueda = ProductoVenta::where('producto_id',$productoId)->first();
+        $busqueda = ProductoVenta::where('producto_presentacion_id',$productoId)->first();
 
 
         if($busqueda) $this->emit('errorSize', 'Este producto esta asociado a una venta, no puede eliminarlo');
