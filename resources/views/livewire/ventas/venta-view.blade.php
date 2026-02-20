@@ -108,7 +108,7 @@
                                     <tr class="hover:bg-gray-50 transition-colors">
                                         <td class="py-4 px-4">
                                             <div>
-                                                <p class="font-medium text-gray-900">{{ $producto->producto_presentacion->producto->nombre }}</p>
+                                                <p class="font-medium text-gray-900">{{ $producto->producto_presentacion->producto->nombre }} ({{ $producto->producto_presentacion->nombre }})</p>
                                             </div>
                                         </td>
                                         <td class="py-4 px-4 text-center">
