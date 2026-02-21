@@ -574,7 +574,7 @@ class PuntoVentaCreate extends Component
    public function reanudarVenta($ventaId)
     {
         try {
-            $venta = Venta::with(['carroCompra.presentacion_producto'])->find($ventaId);
+            $venta = Venta::with(['carroCompra.producto_presentacion'])->find($ventaId);
             
             if (!$venta || $venta->estado != Venta::ESTADO_PAUSADA) {
                 $this->dispatchBrowserEvent('notify', [
@@ -621,7 +621,7 @@ class PuntoVentaCreate extends Component
             foreach ($venta->carroCompra as $item) {
                 CarroCompra::create([
                     'user_id' => $this->user_id,
-                    'producto_presentacion_id' => $item->producto_id,
+                    'producto_presentacion_id' => $item->producto_presentacion_id,
                     'cantidad' => $item->cantidad,
                     'estado' => 'abierta',
                     'venta_id' => $venta->id
