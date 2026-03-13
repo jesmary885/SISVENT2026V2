@@ -6,6 +6,7 @@ use Livewire\Component;
 use Livewire\WithFileUploads;
 use App\Imports\ProductosImport;
 use Maatwebsite\Excel\Facades\Excel;
+use App\Exports\ProductosExport;
 
 class ImportExportInventario extends Component
 {
@@ -176,6 +177,18 @@ class ImportExportInventario extends Component
     public function close(){
 
           $this->open = false;
+    }
+
+     public function exportar()
+    {
+        try {
+            $nombreArchivo = 'inventario-productos-' . date('Y-m-d-H-i') . '.xlsx';
+            
+            return Excel::download(new ProductosExport, $nombreArchivo);
+            
+        } catch (\Exception $e) {
+            $this->addError('exportar', 'Error al exportar: ' . $e->getMessage());
+        }
     }
 
 

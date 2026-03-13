@@ -2,7 +2,7 @@
 
 namespace App\Exports;
 
-use App\Models\Producto;
+use App\Models\ProductoPresentaciones;
 use Maatwebsite\Excel\Concerns\FromCollection;
 use Maatwebsite\Excel\Concerns\WithHeadings;
 use Maatwebsite\Excel\Concerns\WithMapping;
@@ -13,59 +13,64 @@ class ProductosExport implements FromCollection, WithHeadings, WithMapping, With
 {
     public function collection()
     {
-        return Producto::with('marca')->get();
+        return ProductoPresentaciones::with(['producto.marca'])
+            ->where('activo', true)
+            ->get();
     }
 
     public function headings(): array
     {
         return [
-            'ID',
             'Nombre',
-            'Código de Barras',
-            'Cantidad en Stock',
-            'Presentación',
-            'Categoría',
-            'Precio de Venta',
-            'Stock Mínimo',
+            'Codigo de Barras',
+            'Marca',
+            'Stock Minimo',
             'Exento',
             'Estado',
-            'Marca',
-            'Fecha de Creación',
-            'Última Actualización'
+            'Presentacion',
+            'Factor',
+            'Precio',
+            'Cantidad'
         ];
     }
 
-    public function map($producto): array
+    public function map($presentacion): array
     {
+        $producto = $presentacion->producto;
+
+        if ($presentacion->nombre === 'unidad') {
+            $cantidad = $producto->stock_base;
+        } else {
+            $cantidad = $presentacion->cantidad_de_cajas;
+        }
+
         return [
-            $producto->id,
             $producto->nombre,
-            $producto->cod_barra ?? 'N/A',
-            $producto->cantidad,
-            $producto->presentacion ?? 'N/A',
-            $producto->categoria ?? 'N/A',
-            $producto->precio_venta,
+            $producto->cod_barra ?? '',
+            $producto->marca->nombre ?? '',
             $producto->stock_minimo,
-            $producto->exento ?? 'N/A',
-            $producto->estado ?? 'Activo',
-            $producto->marca->nombre ?? 'N/A',
-            $producto->created_at->format('d/m/Y H:i'),
-            $producto->updated_at->format('d/m/Y H:i'),
+            $producto->exento,
+            $producto->estado,
+            $presentacion->nombre,
+            $presentacion->factor_base,
+            $presentacion->precio_usd,
+            $cantidad
         ];
     }
 
     public function styles(Worksheet $sheet)
     {
         return [
-            // Estilo para el encabezado
             1 => [
-                'font' => ['bold' => true, 'color' => ['rgb' => 'FFFFFF']],
-                'fill' => ['fillType' => 'solid', 'startColor' => ['rgb' => '4F46E5']]
-            ],
-            // Estilo para las columnas de cantidad (alertas)
-            'D' => [
-                'font' => ['bold' => true]
-            ],
+                'font' => [
+                    'bold' => true,
+                    'color' => ['rgb' => 'FFFFFF']
+                ],
+                'fill' => [
+                    'fillType' => 'solid',
+                    'startColor' => ['rgb' => '16A34A']
+                ]
+            ]
         ];
     }
 }
