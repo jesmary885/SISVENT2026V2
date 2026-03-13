@@ -130,7 +130,7 @@ class InventarioCreate extends Component
           
           }
 
-          if($unidad_editar > 0 && $unidad_editar == 0){
+          if($unidad_editar > 0 && $caja_editar == 0){
 
             $this->tipo_presentacion = 'Unidad';
             $this->stock_inicial = $this->registro->stock_base;
@@ -355,7 +355,7 @@ class InventarioCreate extends Component
                 if($busqueda->nombre == 'unidad'){
                     $busqueda->update(
                       [
-                        'precio_usd' => (float) $this->precio_unidad,
+                        'precio_usd' => (float) $this->precio_venta,
                       ]
                   );
 
@@ -368,7 +368,7 @@ class InventarioCreate extends Component
                 }
             }
 
-            if($caja == 0){
+            if($caja > 0){
 
                  ProductoPresentaciones::where('producto_id',$this->registro->id)
                     ->where('nombre','caja')
@@ -383,7 +383,7 @@ class InventarioCreate extends Component
                     'producto_id' => $busqueda->producto_id,
                     'nombre' => 'unidad',
                     'factor_base' => (float) $this->unidades_por_caja,
-                    'precio_usd' => (float) $this->precio_caja,
+                    'precio_usd' => (float) $this->precio_unidad,
                     'activo' => true,
                 ]);
 
@@ -417,7 +417,7 @@ class InventarioCreate extends Component
 
                   $busqueda->update(
                       [
-                        'precio_usd' => (float) $this->precio_unidad,
+                        'precio_usd' => (float) $this->precio_venta,
                       ]
                     );
                    

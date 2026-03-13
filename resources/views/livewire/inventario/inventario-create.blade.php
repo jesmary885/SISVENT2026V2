@@ -186,6 +186,8 @@
 
                     @endif
 
+                    {{$tipo_presentacion}}
+
 
                     
                 </div>
