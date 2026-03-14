@@ -104,11 +104,11 @@
                          <td class="px-6 py-4 text-center">
                                 <span class="bg-blue-100 text-blue-800 px-3 py-1 rounded-lg font-medium">
                                     
-                                    @if($registro->precio_compra_dolares)
-                                    {{$registro->precio_compra_dolares}} $
+                                    @if($registro->moneda_compra == 'USD')
+                                    {{$registro->precio_unitario}} $
                                     @endif
                                     @if($registro->precio_compra_bolivares)
-                                    {{$registro->precio_compra_bolivares}} Bs
+                                    {{$registro->precio_unitario}} Bs
                                     @endif
                             
                                 </span>
@@ -117,11 +117,11 @@
                          <td class="px-6 py-4 text-center">
                                  <span class="bg-blue-100 text-blue-800 px-3 py-1 rounded-lg font-medium">
                                     
-                                    @if($registro->total_pagado_dolares)
-                                    {{$registro->total_pagado_dolares}} $
+                                    @if($registro->moneda_compra == 'USD')
+                                    {{$registro->total_original}} $
                                     @endif
                                     @if($registro->total_pagado_bolivares)
-                                    {{$registro->total_pagado_bolivares}} Bs
+                                    {{$registro->total_original}} Bs
                                     @endif
                             
                                 </span>

@@ -3,28 +3,25 @@
 namespace App\Http\Livewire\Administracion\Compras;
 
 use App\Models\Producto;
+use App\Models\ProductoPresentaciones;
 use App\Models\Proveedor;
+use App\Models\Tasa;
 use Livewire\Component;
 
 class ComprasEdit extends Component
 {
 
     protected $listeners = ['render'];
-    public $open = false,$compra,$registro,$user_id,$proveedores,$proveedor_id,$cantidad,$precio_compra_dolares,$precio_compra_bolivares, $tasa_compra,$fecha_vencimiento,$lote_numero,$metodo_pago,$total_dolares;
+    public $open = false,$compra, $tasa_actual, $registro,$user_id,$proveedores,$proveedor_id,$cantidad,$precio_compra, $tasa_compra,$fecha_vencimiento,$lote_numero,$metodo_pago,$total_dolares;
 
-    protected $rules_dolares = [
+    protected $rules = [
       'cantidad' => 'required',
-      'proveedor' => 'required',
+      'proveedor_id' => 'required',
       'metodo_pago' => 'required',
-      'precio_compra_dolares' => 'required',
+      'precio_compra' => 'required',
     ];
 
-    protected $rules_bolivares = [
-      'cantidad' => 'required',
-      'proveedor' => 'required',
-      'metodo_pago' => 'required',
-      'precio_compra_bolivares' => 'required',
-    ];
+
 
 
     public function close(){
@@ -41,7 +38,15 @@ class ComprasEdit extends Component
      public function mount(){
 
 
-          $this->cantidad = $this->registro->cantidad;
+        $this->cantidad = $this->registro->cantidad;
+
+         $this->metodo_pago = $this->registro->metodo_pago;
+
+         $this->precio_compra = $this->registro->precio_unitario;
+
+        $this->tasa_actual=Tasa::find(1)->tasa_actual;
+
+
 
   
          $this->proveedores = Proveedor::all();
@@ -59,60 +64,133 @@ class ComprasEdit extends Component
 
       if($this->registro->cantidad != $this->cantidad){
         if($this->registro->cantidad > $this->cantidad){
+
             $diferencia_cantidad = $this->registro->cantidad - $this->cantidad;
 
-            $producto_mod = Producto::find($this->registro->producto_id);
 
-            $producto_mod->update([
-              'cantidad' => $producto_mod->cantidad - $diferencia_cantidad
-            ]);
+            $presentacion_caja = ProductoPresentaciones::where('producto_id',$this->registro->producto_id)
+              ->where('nombre','caja')
+              ->first();
+
+            if($presentacion_caja){
+
+              $cant_cajas_nueva =  $presentacion_caja->cantidad_de_cajas - $diferencia_cantidad;
+
+              $presentacion_caja->update([
+                'cantidad_de_cajas' => (float) $cant_cajas_nueva,
+              ]);
+
+              $stock_base_nueva = (float) $diferencia_cantidad * (float) $presentacion_caja->factor_base;
+          
+              $producto_modif = Producto::find($this->registro->producto_id);
+              $product_cantidad_unidad = $producto_modif->stock_base - ($stock_base_nueva);
+
+              $producto_modif->update([
+                'stock_base' => $product_cantidad_unidad
+              ]);
+
+            }
+
+            else{
+              $producto_modif = Producto::find($this->registro->producto_id);
+              $product_cantidad_unidad = $producto_modif->stock_base - ($this->cantidad );
+
+              $producto_modif->update([
+                'stock_base' => $product_cantidad_unidad
+              ]);
+            }
+
         } 
 
         else{
 
             $diferencia_cantidad = $this->cantidad - $this->registro->cantidad ;
 
-            $producto_mod = Producto::find($this->registro->producto_id);
+            $presentacion_caja = ProductoPresentaciones::where('producto_id',$this->registro->producto_id)
+              ->where('nombre','caja')
+              ->first();
 
-            $producto_mod->update([
-              'cantidad' => $producto_mod->cantidad + $diferencia_cantidad
-            ]);
+            if($presentacion_caja){
+
+              $cant_cajas_nueva =  $presentacion_caja->cantidad_de_cajas + $diferencia_cantidad;
+
+              $presentacion_caja->update([
+                'cantidad_de_cajas' => (float) $cant_cajas_nueva,
+              ]);
+
+              $stock_base_nueva = (float) $diferencia_cantidad * (float) $presentacion_caja->factor_base;
+          
+              $producto_modif = Producto::find($this->registro->producto_id);
+              $product_cantidad_unidad = $producto_modif->stock_base + ($stock_base_nueva);
+
+              $producto_modif->update([
+                'stock_base' => $product_cantidad_unidad
+              ]);
+
+            }
+
+            else{
+              $producto_modif = Producto::find($this->registro->producto_id);
+              $product_cantidad_unidad = $producto_modif->stock_base + ($this->cantidad );
+
+              $producto_modif->update([
+                 'stock_base' => $product_cantidad_unidad
+              ]);
+            }
         }
+
+
+
+
+
+
+
+        
+
+
+
+
+
+
+
+
+
 
       }
 
       
+        $totalOriginal = 0;
+        $totalUsd = 0;
+        $moneda = '';
+        $precioUnitario = 0;
 
-       if($this->metodo_pago == 'bs_efec' || $this->metodo_pago == 'pago_movil' || $this->metodo_pago == 'biopago' ){
+    if(in_array($this->metodo_pago, ['bs_efec','pago_movil'])){
+
+        $moneda = 'VES';
+        $precioUnitario = $this->precio_compra;
+        $totalOriginal = $precioUnitario * $this->cantidad;
+        $totalUsd = $totalOriginal / $this->tasa_actual;
+
+    }else{
+
+        $moneda = 'USD';
+        $precioUnitario = $this->precio_compra;
+        $totalOriginal = $precioUnitario * $this->cantidad;
+        $totalUsd = $totalOriginal;
+    }
+
 
         $this->registro->update([
-            'producto_id' => $this->registro->id,
-            'user_id' => $this->user_id,
-            'caja_id' => 1,
-            'proveedor_id' => $this->proveedor_id,
-            'cantidad' => $this->cantidad,
-            'metodo_pago' => $this->metodo_pago,
-            'precio_compra_bolivares' => $this->precio_compra_bolivares,
-            'total_pagado_bolivares' => $this->precio_compra_bolivares * $this->cantidad,
-            
+          'proveedor_id' => $this->proveedor_id,
+          'cantidad' => $this->cantidad,
+          'moneda_compra' => $moneda,
+          'metodo_pago' => $this->metodo_pago,
+          'precio_unitario' => $precioUnitario,
+          'total_original' => $totalOriginal,
+          'tasa_cambio_compra' => $this->tasa_actual,
+          'total_usd_equivalente' => $totalUsd,
         ]);
 
-       
-
-        }else{
-
-             $this->registro->update([
-                'producto_id' => $this->registro->id,
-                'user_id' => $this->user_id,
-                'caja_id' => 1,
-                'proveedor_id' => $this->proveedor_id,
-                'cantidad' => $this->cantidad,
-                'metodo_pago' => $this->metodo_pago,
-                'precio_compra_dolares' => $this->precio_compra_dolares,
-                'total_pagado_dolares' => $this->precio_compra_dolares * $this->cantidad,
-            ]);
-
-        }
        
           $this->reset(['open']);
           $this->emitTo('administracion.compras.compras-index','render');

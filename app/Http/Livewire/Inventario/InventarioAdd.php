@@ -76,20 +76,7 @@ class InventarioAdd extends Component
         $moneda = '';
         $precioUnitario = 0;
 
-      // if($this->registro->vencimiento == 'Si') {
-      //    $rules = $this->rules;
-      //   $this->validate($rules);
-      // }
-
-      //   $producto_lote = new ProductoLote();
-      //   if($this->registro->vencimiento == 'Si') {
-      //   $producto_lote->fecha_vencimiento = $this->fecha_vencimiento;
-      //   }
-      //   $producto_lote->producto_id = $this->registro->id;
-      //   $producto_lote->numero= $this->lote_numero;
-      //   $producto_lote->save();
-
-      if(in_array($this->metodo_pago, ['bs_efec','pago_movil'])){
+    if(in_array($this->metodo_pago, ['bs_efec','pago_movil'])){
 
         $moneda = 'VES';
         $precioUnitario = $this->precio_compra_bolivares;
@@ -143,7 +130,6 @@ class InventarioAdd extends Component
 
         $presentacion_caja = ProductoPresentaciones::where('producto_id',$this->registro->id)
           ->where('nombre','caja')
-          ->where('producto_id',$this->registro->id)
           ->first();
 
         if($presentacion_caja){

@@ -209,41 +209,24 @@
 
                     <div class="w-1/2">
 
-                        @if($metodo_pago == 'bs_efec' || $metodo_pago == 'pago_movil' )
-                            <div>
-                                <label for="cod_barra" class="block text-sm font-medium text-gray-700 mb-2">
-                                    Precio de compra en Bolívares
-                                </label>
-                                <input 
-                                    type="number" 
-                                    id="precio_compra_bolivares"
-                                    wire:model.defer="precio_compra_bolivares"
-                                    class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 bg-white placeholder-gray-400"
-                                    placeholder="Ejemplo 1000"
-                                >
-                                @error('precio_compra_bolivares')
-                                    <p class="text-red-500 text-sm mt-1">{{ $message }}</p>
-                                @enderror
-                            </div>
-                        @endif
-                        @if($metodo_pago == 'dol_efec' || $metodo_pago == 'usdt' )
+                
 
                             <div>
                                 <label for="cod_barra" class="block text-sm font-medium text-gray-700 mb-2">
-                                    Precio de compra en Dólares
+                                    Precio de compra (por unidad)
                                 </label>
                                 <input 
                                     type="number" 
-                                    id="precio_compra_dolares"
-                                    wire:model.defer="precio_compra_dolares"
+                                    id="precio_compra"
+                                    wire:model.defer="precio_compra"
                                     class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 bg-white placeholder-gray-400"
                                     placeholder="Ejemplo 10"
                                 >
-                                @error('precio_compra_dolares')
+                                @error('precio_compra')
                                     <p class="text-red-500 text-sm mt-1">{{ $message }}</p>
                                 @enderror
                             </div>
-                        @endif
+                   
 
 
                     </div>

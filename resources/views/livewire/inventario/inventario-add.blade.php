@@ -33,7 +33,7 @@
     
     </button>
 
-    <x-dialog-modal wire:model="open" maxWidth="xl">
+    <x-dialog-modal wire:model="open" maxWidth="2xl">
 
         <x-slot name="title">
             <div class=" flex justify-between ">
@@ -133,7 +133,7 @@
                         @if($metodo_pago == 'bs_efec' || $metodo_pago == 'pago_movil' )
                             <div>
                                 <label for="cod_barra" class="block text-sm font-medium text-gray-700 mb-2">
-                                    Precio de compra en Bolívares
+                                    Precio de compra en Bolívares (por unidad)
                                 </label>
                                 <input 
                                     type="number" 
@@ -151,7 +151,7 @@
 
                             <div>
                                 <label for="cod_barra" class="block text-sm font-medium text-gray-700 mb-2">
-                                    Precio de compra en Dólares
+                                    Precio de compra en Dólares  (por unidad)
                                 </label>
                                 <input 
                                     type="number" 
